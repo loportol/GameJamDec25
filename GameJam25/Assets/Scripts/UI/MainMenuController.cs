@@ -5,7 +5,6 @@ public class MainMenuController : MonoBehaviour
 {
     [SerializeField] private GameObject mainMenuUI;
     [SerializeField] private GameObject creditsUI;
-    [SerializeField] private string sceneName;
 
     public void BackToMain()
     {
@@ -21,7 +20,7 @@ public class MainMenuController : MonoBehaviour
 
     public void StartGame()
     {
-        SceneManager.LoadScene(sceneName);
+        SceneManager.LoadScene(1);
     }
 
     public void ExitGame()
