@@ -10,6 +10,7 @@ public class AudioClipSO : ScriptableObject
     [SerializeField] private List<string> responses;
     [SerializeField] private List<int> correctResponses;
     [SerializeField] private float clipLength;
+    [SerializeField] private AudioClipSO nextClip;
 
     public List<string> GetResponses()
     {
@@ -24,6 +25,11 @@ public class AudioClipSO : ScriptableObject
     public float GetClipLength()
     {
         return clipLength;
+    }
+
+    public AudioClipSO GetNextClip()
+    {
+        return nextClip;
     }
 
     public bool IsResponseCorrect(string response)

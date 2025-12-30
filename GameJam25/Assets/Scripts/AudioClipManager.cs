@@ -8,7 +8,8 @@ public class AudioClipManager : MonoBehaviour
 
     public static AudioClipManager Instance { get; private set; }
     private AudioSource audioSource;
-    private AudioClipSO currentClip;
+    private AudioClipSO clipToPlay;
+
 
     private void Awake()
     {
@@ -20,6 +21,9 @@ public class AudioClipManager : MonoBehaviour
 
         Instance = this;
         audioSource = GetComponent<AudioSource>();
+
+        if (audioClips.Count > 0)
+            clipToPlay = audioClips[0];
     }
 
     private void Update()
@@ -35,11 +39,31 @@ public class AudioClipManager : MonoBehaviour
     {
         if (audioSource.isPlaying) return;
 
-        AudioClipSO clipToPlay = audioClips[0]; // 0 is placeholder
-        currentClip = audioClips[0];
-        audioSource.clip = clipToPlay.GetAudioClip();
-        audioSource.Play();
+        StartCoroutine(PlayQueue(clipToPlay));
         Debug.Log("Playing audio");
+    }
+
+    private IEnumerator PlayQueue(AudioClipSO clip)
+    {
+        audioSource.clip = clip.GetAudioClip();
+        audioSource.Play();
+
+        yield return new WaitUntil(() => audioSource.isPlaying);
+        yield return new WaitUntil(() => !audioSource.isPlaying);
+
+        GetNextClipToPlay(clip);
+    }
+
+    private void GetNextClipToPlay(AudioClipSO clip)
+    {
+        AudioClipSO nextClip = clip.GetNextClip();
+        if (nextClip)
+        {
+            clipToPlay = nextClip;
+            PlayDialogue();
+            return;
+        }
+        Debug.LogWarning("No next clip has been set");
     }
 
     public void PauseDialogue(bool pause)
@@ -56,10 +80,10 @@ public class AudioClipManager : MonoBehaviour
 
     public void StopDialogue()
     {
-        if (!audioSource.isPlaying) return;
         audioSource.Stop();
     }
 }
+
 /*
 Simplified: Point - and - Click Search based on Audio
 The player will be fed a dialogue audio line 
