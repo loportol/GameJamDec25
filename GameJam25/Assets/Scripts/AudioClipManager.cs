@@ -66,17 +66,31 @@ public class AudioClipManager : MonoBehaviour
         dialogueHasEnded.Invoke();
     }
     
-    // call this after a choice has been made, only call if a button was selected
-    private void PlayNextDialogue(ClipResponse clip)
+   // QTE calls this when a player actually clicks a response button.
+public void ChooseResponse(ClipResponse choice)
+{
+    if (choice == null)
     {
-        AudioClipSO nextClip = clip.nextClipToPlay;
-        if (nextClip)
-        {
-            clipToPlay = nextClip;
-            Debug.LogWarning("No next clip has been set, defaulting to timid choice");
-        }
-        PlayDialogue();
+        Debug.LogWarning("ChooseResponse called with null choice; defaulting to skip.");
+        PlayDialogue(); // will use nextClipIfChoiceSkipped that we already set during playback
+        return;
     }
+
+    // if a next clip exists, use it. If not, fall back to whatever skip is set to.
+    if (choice.nextClipToPlay != null)
+    {
+        clipToPlay = choice.nextClipToPlay;
+    }
+    else
+    {
+        Debug.LogWarning("No next clip set on chosen response; defaulting to skipped-choice clip.");
+        // clipToPlay was already set to nextClipIfChoiceSkipped inside PlayDialogueCoroutine
+        // so we can just leave it alone here.
+    }
+
+    PlayDialogue();
+}
+
 
     public void PauseDialogue(bool pause)
     {

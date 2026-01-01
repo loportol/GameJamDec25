@@ -4,22 +4,36 @@ using TMPro;
 
 public class ThoughtButtonUI : MonoBehaviour
 {
+    [Header("Wiring")]
     public TextMeshProUGUI buttonText;
+    public Button button; // optional, but makes interactable control easy
 
-    private bool isCorrect;
-    private System.Action<bool> onSelected;
+    private ClipResponse responseData;
+    private System.Action<ClipResponse> onSelected;
 
-    public void Setup(string text, bool correct, System.Action<bool> callback)
+    // This sets up the button to represent ONE ClipResponse option.
+    public void Setup(ClipResponse data, System.Action<ClipResponse> callback)
     {
-        buttonText.text = text;
-        isCorrect = correct;
+        responseData = data;
         onSelected = callback;
+
+        // show text
+        if (buttonText != null) buttonText.text = data.response;
+
+        // make sure we can toggle interactable later
+        if (button == null) button = GetComponent<Button>();
     }
 
+    public void SetInteractable(bool canClick)
+    {
+        if (button == null) button = GetComponent<Button>();
+        button.interactable = canClick;
+    }
+
+    // Called by the Unity Button OnClick() event.
     public void OnClick()
     {
-        onSelected?.Invoke(isCorrect);
-        Destroy(gameObject); // Remove button after selection
+        onSelected?.Invoke(responseData);
+        Destroy(gameObject); // remove after click so the screen clears naturally
     }
 }
-
