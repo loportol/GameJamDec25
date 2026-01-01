@@ -1,15 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
+
+[System.Serializable]
+public enum ChoiceType
+{
+    Combative,
+    Timid,
+    Focused
+}
 
 public class AudioClipManager : MonoBehaviour
 {
-    public List<AudioClipSO> audioClips;
+    [HideInInspector] public UnityEvent<AudioClipSO> dialogueHasStarted = new UnityEvent<AudioClipSO>();
+    [HideInInspector] public UnityEvent dialogueHasEnded = new UnityEvent();
+
+    public AudioClipSO startingAudioClip;
 
     public static AudioClipManager Instance { get; private set; }
     private AudioSource audioSource;
     private AudioClipSO clipToPlay;
-
 
     private void Awake()
     {
@@ -21,9 +32,7 @@ public class AudioClipManager : MonoBehaviour
 
         Instance = this;
         audioSource = GetComponent<AudioSource>();
-
-        if (audioClips.Count > 0)
-            clipToPlay = audioClips[0];
+        clipToPlay = startingAudioClip;
     }
 
     private void Update()
@@ -39,31 +48,34 @@ public class AudioClipManager : MonoBehaviour
     {
         if (audioSource.isPlaying) return;
 
-        StartCoroutine(PlayQueue(clipToPlay));
+        dialogueHasStarted.Invoke(clipToPlay);
+        StartCoroutine(PlayDialogueCoroutine(clipToPlay));
         Debug.Log("Playing audio");
+        // spawn buttons once dialogue starts
     }
 
-    private IEnumerator PlayQueue(AudioClipSO clip)
+    private IEnumerator PlayDialogueCoroutine(AudioClipSO clip)
     {
         audioSource.clip = clip.GetAudioClip();
         audioSource.Play();
+        clipToPlay = clip.GetNextClipIfChoiceSkipped();
 
         yield return new WaitUntil(() => audioSource.isPlaying);
         yield return new WaitUntil(() => !audioSource.isPlaying);
 
-        GetNextClipToPlay(clip);
+        dialogueHasEnded.Invoke();
     }
-
-    private void GetNextClipToPlay(AudioClipSO clip)
+    
+    // call this after a choice has been made, only call if a button was selected
+    private void PlayNextDialogue(ClipResponse clip)
     {
-        AudioClipSO nextClip = clip.GetNextClip();
+        AudioClipSO nextClip = clip.nextClipToPlay;
         if (nextClip)
         {
             clipToPlay = nextClip;
-            PlayDialogue();
-            return;
+            Debug.LogWarning("No next clip has been set, defaulting to timid choice");
         }
-        Debug.LogWarning("No next clip has been set");
+        PlayDialogue();
     }
 
     public void PauseDialogue(bool pause)
@@ -83,10 +95,3 @@ public class AudioClipManager : MonoBehaviour
         audioSource.Stop();
     }
 }
-
-/*
-Simplified: Point - and - Click Search based on Audio
-The player will be fed a dialogue audio line 
-While the dialogue is playing different “thoughts” will appear on screen to be used as responses
-The player has a limited amount of time to respond to when the audio is finished (Quick Time Event)
-*/

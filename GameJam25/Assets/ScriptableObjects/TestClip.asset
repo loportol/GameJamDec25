@@ -12,8 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1bc895c73a066a43b941376ab15b1a5, type: 3}
   m_Name: TestClip
   m_EditorClassIdentifier: 
-  audioClip: {fileID: 0}
+  audioClip: {fileID: 8300000, guid: 92dbe1df3d6fdec4c99725bfba1919a5, type: 3}
   responses:
-  - Test
-  correctResponses: 00000000
-  clipLength: 0
+  - response: Lorem
+    numToSpawn: 3
+    choiceType: 1
+    spawnTime: 0
+    nextClipToPlay: {fileID: 11400000}
+  - response: Ipsum
+    numToSpawn: 3
+    choiceType: 0
+    spawnTime: 0
+    nextClipToPlay: {fileID: 11400000}
+  clipLength: 5
+  nextClipIfChoiceSkipped: {fileID: 11400000}
