@@ -1,18 +1,26 @@
 using System.Collections.Generic;
 using System.Drawing;
 using UnityEngine;
-using static Unity.Collections.AllocatorManager;
+
+[System.Serializable]
+public class ClipResponse
+{
+    public string response;
+    public int numToSpawn;
+    public ChoiceType choiceType;
+    public float spawnTime = 0; // 0 means its spawned from the beginning
+    public AudioClipSO nextClipToPlay;
+}
 
 [CreateAssetMenu(menuName = "Scriptable Objects/Audio Clip")]
 public class AudioClipSO : ScriptableObject
 {
     [SerializeField] private AudioClip audioClip; 
-    [SerializeField] private List<string> responses;
-    [SerializeField] private List<int> correctResponses;
+    [SerializeField] private List<ClipResponse> responses;
     [SerializeField] private float clipLength;
-    [SerializeField] private AudioClipSO nextClip;
+    [SerializeField] private AudioClipSO nextClipIfChoiceSkipped;
 
-    public List<string> GetResponses()
+    public List<ClipResponse> GetResponses()
     {
         return responses;
     }
@@ -27,22 +35,8 @@ public class AudioClipSO : ScriptableObject
         return clipLength;
     }
 
-    public AudioClipSO GetNextClip()
+    public AudioClipSO GetNextClipIfChoiceSkipped()
     {
-        return nextClip;
-    }
-
-    public bool IsResponseCorrect(string response)
-    {
-        foreach (int index in correctResponses)
-        {
-            if (index < 0 || index >= responses.Count) continue;
- 
-            if (responses[index] == response)
-            {
-                return true;
-            }
-        }
-        return false;
+        return nextClipIfChoiceSkipped;
     }
 }

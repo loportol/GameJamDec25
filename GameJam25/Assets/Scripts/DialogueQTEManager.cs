@@ -1,21 +1,39 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
+using UnityEngine.Events;
 
 public class DialogueQTEManager : MonoBehaviour
 {
+    [Header("Button Spawning")]
     public GameObject thoughtButtonPrefab;
     public RectTransform canvasRect;
 
-    public float responseTime = 3f;
+    [Header("Timer")]
+    [SerializeField] private Slider timerSlider;
+    [SerializeField] private float responseTime = 5f;
 
     private bool responded = false;
+
+    private void Start()
+    {
+        AudioClipManager.Instance.dialogueHasEnded.AddListener(() =>
+        {
+            timerSlider.gameObject.SetActive(true);
+            StartCoroutine(ResponseTimer());
+        });
+
+        timerSlider.maxValue = responseTime;
+        timerSlider.value = responseTime;
+        timerSlider.gameObject.SetActive(false);
+    }
 
     public void StartDialogue(List<string> words, List<string> correctWords)
     {
         responded = false;
         SpawnThoughts(words, correctWords);
-        StartCoroutine(ResponseTimer());
+        //StartCoroutine(ResponseTimer());
     }
 
     void SpawnThoughts(List<string> words, List<string> correctWords)
@@ -43,15 +61,33 @@ public class DialogueQTEManager : MonoBehaviour
         return new Vector2(x, y);
     }
 
-    IEnumerator ResponseTimer()
+    private IEnumerator ResponseTimer()
     {
-        yield return new WaitForSeconds(responseTime);
+        Debug.Log("Started timer");
+        float timeRemaining = responseTime;
+        timerSlider.value = responseTime;
+
+        while (timeRemaining > 0f)
+        {
+            timeRemaining -= Time.deltaTime;
+            timerSlider.value = timeRemaining;
+
+            yield return null;
+        }
+
+        timerSlider.value = 0f;
+        timerSlider.gameObject.SetActive(false);
 
         if (!responded)
         {
             Debug.Log("FAILED: No response in time");
             ClearButtons();
-        }
+            AudioClipManager.Instance.PlayDialogue();   
+        } /*else
+        {
+            AudioClipManager.PlayNextDialogue();
+        }*/
+        // set up once ClipResponse is integrated into the buttons
     }
 
     void OnResponseSelected(bool correct)
