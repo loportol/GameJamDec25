@@ -2241,9 +2241,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c13c14b1a6c64e68a4b968bf309c264, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  thoughtButtonPrefab: {fileID: 0}
-  canvasRect: {fileID: 0}
-  timerSlider: {fileID: 0}
+  thoughtButtonPrefab: {fileID: 9138385962882437665, guid: 762eb68aba7804364b3f187ff1925e3d, type: 3}
+  spawnAreaRect: {fileID: 779579857}
+  noSpawnZones: []
+  timerSlider: {fileID: 73818099}
   responseTime: 5
 --- !u!4 &1921377046
 Transform:
