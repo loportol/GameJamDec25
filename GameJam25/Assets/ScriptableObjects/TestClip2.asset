@@ -10,27 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f1bc895c73a066a43b941376ab15b1a5, type: 3}
-  m_Name: TestClip
+  m_Name: TestClip2
   m_EditorClassIdentifier: 
   audioClip: {fileID: 8300000, guid: 92dbe1df3d6fdec4c99725bfba1919a5, type: 3}
   responses:
-  - response: TIMID
+  - response: BACK TO START
     numToSpawn: 3
     choiceType: 1
     spawnTime: 0
-    responseSize: 1
-    nextClipToPlay: {fileID: 11400000}
-  - response: COMBATITVE
-    numToSpawn: 5
-    choiceType: 0
-    spawnTime: 0
-    responseSize: 1
-    nextClipToPlay: {fileID: 11400000}
-  - response: FOCUSED
-    numToSpawn: 1
-    choiceType: 2
-    spawnTime: 0
-    responseSize: 1
-    nextClipToPlay: {fileID: 11400000, guid: 491a695b90d5d0946aaa8de753beabef, type: 2}
+    responseSize: 2
+    nextClipToPlay: {fileID: 11400000, guid: ea76574311b95e143aceedd54995ce28, type: 2}
   clipLength: 5
-  nextClipIfChoiceSkipped: {fileID: 11400000}
+  nextClipIfChoiceSkipped: {fileID: 11400000, guid: ea76574311b95e143aceedd54995ce28, type: 2}

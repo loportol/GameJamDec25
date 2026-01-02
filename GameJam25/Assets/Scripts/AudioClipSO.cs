@@ -9,6 +9,7 @@ public class ClipResponse
     public int numToSpawn;
     public ChoiceType choiceType;
     public float spawnTime = 0; // 0 means its spawned from the beginning
+    public float responseSize = 1f; // default is 1
     public AudioClipSO nextClipToPlay;
 }
 

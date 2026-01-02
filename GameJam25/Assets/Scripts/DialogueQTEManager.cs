@@ -107,6 +107,7 @@ public class DialogueQTEManager : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             GameObject buttonObj = Instantiate(thoughtButtonPrefab, spawnAreaRect);
+            buttonObj.transform.localScale *= clipResponse.responseSize;
 
             RectTransform rect = buttonObj.GetComponent<RectTransform>();
             rect.anchoredPosition = GetRandomSpawnPosition(rect);
