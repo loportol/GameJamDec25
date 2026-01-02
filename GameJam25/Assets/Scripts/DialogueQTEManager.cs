@@ -18,6 +18,23 @@ public class DialogueQTEManager : MonoBehaviour
     [SerializeField] private Slider timerSlider;
     [SerializeField] private float responseTime = 5f;
 
+    [Header("Spawn Pacing (make thoughts come in bit-by-bit)")]
+    [Tooltip("If true, spawning uses the AUDIO playback time (pauses naturally if audio pauses).")]
+    [SerializeField] private bool useAudioTime = true;
+
+    [Tooltip("How much of the available window we actually use for spawning (0.9 = use 90% of the window).")]
+    [Range(0.1f, 1f)]
+    [SerializeField] private float windowFillPercent = 0.9f;
+
+    [Tooltip("If the window between interactions is tiny, we still want a minimum time to drip thoughts in.")]
+    [SerializeField] private float minSpawnWindowSeconds = 0.5f;
+
+    [Tooltip("If the window is huge, cap it so we don't spawn painfully slow.")]
+    [SerializeField] private float maxSpawnWindowSeconds = 6f;
+
+    [Tooltip("Extra small delay between spawns so it feels like \"thoughts\" and not a machine gun.")]
+    [SerializeField] private float extraDelayBetweenThoughts = 0.08f;
+
     // store active buttons so we can enable/disable them and clear them
     private readonly List<ThoughtButtonUI> activeButtons = new List<ThoughtButtonUI>();
 
@@ -75,50 +92,101 @@ public class DialogueQTEManager : MonoBehaviour
             yield break;
         }
 
-        float t = 0f;
+        // sort by spawnTime so we can treat them like interaction timestamps
+        List<ClipResponse> ordered = new List<ClipResponse>(responses);
+        ordered.Sort((a, b) => a.spawnTime.CompareTo(b.spawnTime));
 
-        List<ClipResponse> remaining = new List<ClipResponse>(responses);
-
-        while (remaining.Count > 0)
+        float clipLength = clip.GetClipLength();
+        if (clipLength <= 0.01f)
         {
-            t += Time.deltaTime;
-
-            for (int i = remaining.Count - 1; i >= 0; i--)
-            {
-                if (t >= remaining[i].spawnTime)
-                {
-                    SpawnClipResponseButtons(remaining[i]);
-                    remaining.RemoveAt(i);
-                }
-            }
-
-            yield return null;
+            clipLength = AudioClipManager.Instance.GetCurrentClipLength();
         }
 
         SetButtonsInteractable(false);
+
+        // for each interaction timestamp: wait until that time -> then drip-spawn its buttons
+        for (int idx = 0; idx < ordered.Count; idx++)
+        {
+            ClipResponse cr = ordered[idx];
+
+            float startTime = Mathf.Max(0f, cr.spawnTime);
+
+            float nextTime = clipLength;
+            if (idx + 1 < ordered.Count)
+                nextTime = Mathf.Max(startTime, ordered[idx + 1].spawnTime);
+
+            float rawWindow = nextTime - startTime;
+
+            float spawnWindow = Mathf.Clamp(rawWindow * windowFillPercent, minSpawnWindowSeconds, maxSpawnWindowSeconds);
+
+            yield return WaitUntilDialogueTime(startTime);
+
+            // drip spawn across spawnWindow (so it feels like thoughts creeping in)
+            yield return SpawnClipResponseButtonsSlow(cr, spawnWindow);
+        }
     }
 
-    private void SpawnClipResponseButtons(ClipResponse clipResponse)
+    private IEnumerator WaitUntilDialogueTime(float targetSeconds)
     {
-        if (clipResponse == null) return;
+        if (!useAudioTime)
+        {
+            // fallback: just wait real time 
+            yield return new WaitForSeconds(targetSeconds);
+            yield break;
+        }
+
+        while (AudioClipManager.Instance.IsPlaying() && AudioClipManager.Instance.GetPlaybackTime() < targetSeconds)
+        {
+            yield return null;
+        }
+    }
+
+    private IEnumerator SpawnClipResponseButtonsSlow(ClipResponse clipResponse, float spawnWindowSeconds)
+    {
+        if (clipResponse == null) yield break;
 
         int count = Mathf.Max(1, clipResponse.numToSpawn);
 
+        float interval = (count <= 1) ? spawnWindowSeconds : (spawnWindowSeconds / (count - 1));
+        interval = Mathf.Max(0.01f, interval); 
+
         for (int i = 0; i < count; i++)
         {
-            GameObject buttonObj = Instantiate(thoughtButtonPrefab, spawnAreaRect);
-            buttonObj.transform.localScale *= clipResponse.responseSize;
+            SpawnOneThoughtButton(clipResponse);
 
-            RectTransform rect = buttonObj.GetComponent<RectTransform>();
-            rect.anchoredPosition = GetRandomSpawnPosition(rect);
+            // tiny delay makes it feel more organic
+            float wait = interval + extraDelayBetweenThoughts;
 
-            ThoughtButtonUI button = buttonObj.GetComponent<ThoughtButtonUI>();
-            button.Setup(clipResponse, OnResponseSelected);
-
-            button.SetInteractable(false);
-
-            activeButtons.Add(button);
+            if (useAudioTime)
+            {
+                float start = AudioClipManager.Instance.GetPlaybackTime();
+                while (AudioClipManager.Instance.IsPlaying() && (AudioClipManager.Instance.GetPlaybackTime() - start) < wait)
+                {
+                    yield return null;
+                }
+            }
+            else
+            {
+                yield return new WaitForSeconds(wait);
+            }
         }
+    }
+
+    private void SpawnOneThoughtButton(ClipResponse clipResponse)
+    {
+        GameObject buttonObj = Instantiate(thoughtButtonPrefab, spawnAreaRect);
+
+        buttonObj.transform.localScale *= clipResponse.responseSize;
+
+        RectTransform rect = buttonObj.GetComponent<RectTransform>();
+        rect.anchoredPosition = GetRandomSpawnPosition(rect);
+
+        ThoughtButtonUI button = buttonObj.GetComponent<ThoughtButtonUI>();
+        button.Setup(clipResponse, OnResponseSelected);
+
+        button.SetInteractable(false);
+
+        activeButtons.Add(button);
     }
 
     private Vector2 GetRandomSpawnPosition(RectTransform buttonRect)
