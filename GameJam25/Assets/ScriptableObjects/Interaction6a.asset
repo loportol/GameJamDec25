@@ -13,6 +13,30 @@ MonoBehaviour:
   m_Name: Interaction6a
   m_EditorClassIdentifier: 
   audioClip: {fileID: 8300000, guid: b51b582fc512eb849be157601cd0aae4, type: 3}
-  responses: []
+  responses:
+  - response: "You\u2019re always like this!"
+    numToSpawn: 1
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: Just leave me alone!
+    numToSpawn: 1
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: "I don\u2019t know why I asked you here."
+    numToSpawn: 1
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: "I\u2019ve had enough."
+    numToSpawn: 1
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
   clipLength: 0
   nextClipIfChoiceSkipped: {fileID: 0}

@@ -13,6 +13,48 @@ MonoBehaviour:
   m_Name: Interaction4
   m_EditorClassIdentifier: 
   audioClip: {fileID: 8300000, guid: da25d75daf4c9354c9e46eceec0cdc1a, type: 3}
-  responses: []
-  clipLength: 0
+  responses:
+  - response: I don't slouch.
+    numToSpawn: 6
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: You always criticize me.
+    numToSpawn: 3
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: I know. I am trying.
+    numToSpawn: 3
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: I know, Mom.
+    numToSpawn: 4
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: I will try my best.
+    numToSpawn: 3
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: I will try my best.
+    numToSpawn: 3
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: Please, if you would let me speak
+    numToSpawn: 3
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  clipLength: 27
   nextClipIfChoiceSkipped: {fileID: 0}

@@ -13,6 +13,18 @@ MonoBehaviour:
   m_Name: Interaction3b
   m_EditorClassIdentifier: 
   audioClip: {fileID: 8300000, guid: 454f136723c3a9543845fee88db35d1d, type: 3}
-  responses: []
-  clipLength: 0
-  nextClipIfChoiceSkipped: {fileID: 0}
+  responses:
+  - response: Mom, I need to tell you something.
+    numToSpawn: 5
+    choiceType: 2
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 11400000, guid: 8b3ae79781452224daae89319beca8a9, type: 2}
+  - response: I hoped we could talk today.
+    numToSpawn: 5
+    choiceType: 2
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 11400000, guid: 8b3ae79781452224daae89319beca8a9, type: 2}
+  clipLength: 28
+  nextClipIfChoiceSkipped: {fileID: 11400000, guid: 8b3ae79781452224daae89319beca8a9, type: 2}

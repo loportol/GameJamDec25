@@ -13,6 +13,36 @@ MonoBehaviour:
   m_Name: Interaction5c
   m_EditorClassIdentifier: 
   audioClip: {fileID: 8300000, guid: c2b0be70f2bd6b2448c4be436464796d, type: 3}
-  responses: []
+  responses:
+  - response: "I\u2019m dramatic??"
+    numToSpawn: 1
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: "Maybe I wouldn\u2019t have to be dramatic if you let me speak"
+    numToSpawn: 1
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: "It\u2019s nothing"
+    numToSpawn: 1
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: "Don\u2019t worry about it."
+    numToSpawn: 1
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: "I\u2019ve decided to drop out of school."
+    numToSpawn: 1
+    choiceType: 2
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
   clipLength: 0
   nextClipIfChoiceSkipped: {fileID: 0}

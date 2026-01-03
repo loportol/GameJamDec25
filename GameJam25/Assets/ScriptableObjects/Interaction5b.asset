@@ -13,6 +13,30 @@ MonoBehaviour:
   m_Name: Interaction5b
   m_EditorClassIdentifier: 
   audioClip: {fileID: 8300000, guid: 61ceb7934088a0b4f86e2f1551c7437e, type: 3}
-  responses: []
-  clipLength: 0
+  responses:
+  - response: I know you do.
+    numToSpawn: 1
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: You do so much for me.
+    numToSpawn: 1
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: "I\u2019m sorry, I know you do so much"
+    numToSpawn: 1
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: Mom, I really need to talk to you.
+    numToSpawn: 1
+    choiceType: 2
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  clipLength: 8
   nextClipIfChoiceSkipped: {fileID: 0}
