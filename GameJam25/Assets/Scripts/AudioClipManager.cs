@@ -16,6 +16,9 @@ public class AudioClipManager : MonoBehaviour
     [HideInInspector] public UnityEvent<AudioClipSO> dialogueHasStarted = new UnityEvent<AudioClipSO>();
     [HideInInspector] public UnityEvent dialogueHasEnded = new UnityEvent();
 
+    // fired when the clip that just finished is marked as an ending clip
+    [HideInInspector] public UnityEvent<AudioClipSO> endingReached = new UnityEvent<AudioClipSO>();
+
     public AudioClipSO startingAudioClip;
 
     public static AudioClipManager Instance { get; private set; }
@@ -64,6 +67,12 @@ public class AudioClipManager : MonoBehaviour
         yield return new WaitUntil(() => !audioSource.isPlaying);
 
         dialogueHasEnded.Invoke();
+
+        // if this clip is an ending, notify UI / scene manager
+        if (clip != null && clip.IsEnding())
+        {
+            endingReached.Invoke(clip);
+        }
     }
     
    // QTE calls this when a player actually clicks a response button.
