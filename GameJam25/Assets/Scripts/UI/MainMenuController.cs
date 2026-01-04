@@ -6,6 +6,8 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private GameObject mainMenuUI;
     [SerializeField] private GameObject creditsUI;
 
+    [SerializeField] private GameObject settingsUI;
+
     public void BackToMain()
     {
         if (UISFXManager.Instance != null)
@@ -14,6 +16,8 @@ public class MainMenuController : MonoBehaviour
     }
         mainMenuUI.gameObject.SetActive(true);
         creditsUI.gameObject.SetActive(false);
+
+        if (settingsUI != null) settingsUI.gameObject.SetActive(false);
     }
 
     public void OpenCredits()
@@ -24,6 +28,29 @@ public class MainMenuController : MonoBehaviour
     }
         mainMenuUI.gameObject.SetActive(false);
         creditsUI.gameObject.SetActive(true);
+
+        if (settingsUI != null) settingsUI.gameObject.SetActive(false);
+    }
+
+    public void OpenSettings()
+    {
+        if (UISFXManager.Instance != null)
+    {
+        UISFXManager.Instance.PlayClick();
+    }
+        mainMenuUI.gameObject.SetActive(false);
+        creditsUI.gameObject.SetActive(false);
+
+        if (settingsUI != null) settingsUI.gameObject.SetActive(true);
+    }
+
+    public void BackFromSettings()
+    {
+        if (UISFXManager.Instance != null)
+    {
+        UISFXManager.Instance.PlayClick();
+    }
+        BackToMain();
     }
 
     public void StartGame()
