@@ -42,6 +42,9 @@ public class StartUIManager : MonoBehaviour
         //Fade the black out
         yield return StartCoroutine(DoFade(1f, 0f));
 
+        //Disable Game Object
+        blackFade.gameObject.SetActive(false);
+
         //Start the audio
         StartAudio();
     }

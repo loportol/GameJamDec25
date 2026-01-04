@@ -1561,9 +1561,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   blackFade: {fileID: 331189095}
-  m_fadeDuration: 0.8
-  m_stayDuration: 2
-  m_smoothCurve:
+  fadeDuration: 5
+  smoothCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -1575,15 +1574,6 @@ MonoBehaviour:
       weightedMode: 0
       inWeight: 0
       outWeight: 0
-    - serializedVersion: 3
-      time: 0.16134709
-      value: 0.048819393
-      inSlope: 0.5841744
-      outSlope: 0.5841744
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
     - serializedVersion: 3
       time: 1
       value: 1
