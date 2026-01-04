@@ -44,6 +44,8 @@ public class DialogueQTEManager : MonoBehaviour
 
     private bool isPaused = false;
     private bool timerIsActive = false;
+    private bool inResponseWindow = false; // only true AFTER audio ends
+
 
     private MomPortraitRoutes portraitManager;
 
@@ -69,8 +71,8 @@ public class DialogueQTEManager : MonoBehaviour
     {
         isPaused = paused;
 
-        // while paused, don't allow clicks
-        SetButtonsInteractable(!paused);
+        // Only allow clicking if we're NOT paused AND we're in the response window
+        SetButtonsInteractable(!paused && inResponseWindow);
 
         // hide timer UI while paused so it doesn't look like it's draining
         if (timerSlider != null)
@@ -93,6 +95,7 @@ public class DialogueQTEManager : MonoBehaviour
     private void OnDialogueStarted(AudioClipSO clip)
     {
         responded = false;
+        inResponseWindow = false; // audio is playing, no clicking
         ClearButtons();
         timerSlider.gameObject.SetActive(false);
 
@@ -105,6 +108,8 @@ public class DialogueQTEManager : MonoBehaviour
     // if paused, don't start timer/click phase yet
     if (isPaused) return;
 
+    inResponseWindow = true; // now clicking is allowed
+
     // safety: only enter response window if audio is REALLY done
     if (AudioClipManager.Instance != null && AudioClipManager.Instance.IsDialogueActive())
         return;
@@ -116,6 +121,7 @@ public class DialogueQTEManager : MonoBehaviour
 
     if (timerRoutine != null) StopCoroutine(timerRoutine);
     timerRoutine = StartCoroutine(ResponseTimer());
+    
     }
 
     private IEnumerator SpawnDuringAudio(AudioClipSO clip)
