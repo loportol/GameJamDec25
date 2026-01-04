@@ -103,4 +103,14 @@ public class PauseMenuController : MonoBehaviour
 
         SceneManager.LoadScene(0);
     }
+
+    public void RestartGame()
+    {
+        if (UISFXManager.Instance != null)
+        {
+            UISFXManager.Instance.PlayClick();
+        }
+
+        SceneManager.LoadScene(1);
+    }
 }
