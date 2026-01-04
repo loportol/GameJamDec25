@@ -56,6 +56,18 @@ public class AudioClipManager : MonoBehaviour
         Debug.Log("Playing audio");
         // spawn buttons once dialogue starts
     }
+    public void SetDialogueVolume(float value)
+{
+    if (audioSource != null)
+    {
+        audioSource.volume = value;
+    }
+}
+
+public float GetDialogueVolume()
+{
+    return (audioSource != null) ? audioSource.volume : 1f;
+}
 
     private IEnumerator PlayDialogueCoroutine(AudioClipSO clip)
     {
