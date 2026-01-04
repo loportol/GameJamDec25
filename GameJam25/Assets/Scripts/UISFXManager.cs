@@ -52,4 +52,10 @@ public class UISFXManager : MonoBehaviour
     GlobalSfxVolume = value;
     PlayerPrefs.SetFloat(SFX_KEY, value);
 }
+
+    public void playClip(AudioClip clip)
+    {
+        if (clickClip == null || source == null) return;
+        source.PlayOneShot(clip, GlobalSfxVolume);
+    }
 }
