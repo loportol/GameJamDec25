@@ -22,6 +22,7 @@ MonoBehaviour:
     nextClipToPlay: {fileID: 0}
   clipLength: 0
   nextClipIfChoiceSkipped: {fileID: 0}
+  yarnNode: Interaction7c
   isEnding: 1
   endingType: 2
   endingTitle: 

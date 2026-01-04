@@ -19,6 +19,7 @@ public class AudioClipSO : ScriptableObject
     [SerializeField] private List<ClipResponse> responses;
     [SerializeField] private float clipLength;
     [SerializeField] private AudioClipSO nextClipIfChoiceSkipped;
+    [SerializeField] private string yarnNode;
 
     [Header("Ending")]
     [SerializeField] private bool isEnding = false;
@@ -50,6 +51,11 @@ public class AudioClipSO : ScriptableObject
     public AudioClipSO GetNextClipIfChoiceSkipped()
     {
         return nextClipIfChoiceSkipped;
+    }
+
+    public string GetYarnNode()
+    {
+        return yarnNode;
     }
 
     // ending getters
