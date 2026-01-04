@@ -40,6 +40,7 @@ MonoBehaviour:
     nextClipToPlay: {fileID: 0}
   clipLength: 19
   nextClipIfChoiceSkipped: {fileID: 0}
+  yarnNode: Interaction7b
   isEnding: 1
   endingType: 1
   endingTitle: 

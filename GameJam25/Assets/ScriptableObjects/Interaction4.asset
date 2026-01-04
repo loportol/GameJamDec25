@@ -58,6 +58,7 @@ MonoBehaviour:
     nextClipToPlay: {fileID: 11400000, guid: d47d5ee94fc1b2a48804eba92751c5d6, type: 2}
   clipLength: 27
   nextClipIfChoiceSkipped: {fileID: 11400000, guid: 936afb4de2e2fd5408ac218cc7edc94e, type: 2}
+  yarnNode: Interaction4
   isEnding: 0
   endingType: 1
   endingTitle: 
