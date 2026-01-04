@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1bc895c73a066a43b941376ab15b1a5, type: 3}
+  m_Name: Interaction5a
+  m_EditorClassIdentifier: 
+  audioClip: {fileID: 8300000, guid: d0bc6cc2cd2a8394a81952b614cd9be2, type: 3}
+  responses:
+  - response: You can be so hypercritical!
+    numToSpawn: 1
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: "I\u2019m sick of you always making remarks!"
+    numToSpawn: 1
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: "I\u2019m dramatic??"
+    numToSpawn: 1
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: Maybe I wouldn't have to be dramatic if you let me speak.
+    numToSpawn: 1
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: "I know, I\u2019m sorry."
+    numToSpawn: 1
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: Mom, I really need to speak to you about something.
+    numToSpawn: 1
+    choiceType: 2
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: "It\u2019s fine."
+    numToSpawn: 1
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  clipLength: 6
+  nextClipIfChoiceSkipped: {fileID: 0}

@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1bc895c73a066a43b941376ab15b1a5, type: 3}
+  m_Name: Interaction4
+  m_EditorClassIdentifier: 
+  audioClip: {fileID: 8300000, guid: da25d75daf4c9354c9e46eceec0cdc1a, type: 3}
+  responses:
+  - response: I don't slouch.
+    numToSpawn: 6
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: You always criticize me.
+    numToSpawn: 3
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: I know. I am trying.
+    numToSpawn: 3
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: I know, Mom.
+    numToSpawn: 4
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: I will try my best.
+    numToSpawn: 3
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: I will try my best.
+    numToSpawn: 3
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  - response: Please, if you would let me speak
+    numToSpawn: 3
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 0}
+  clipLength: 27
+  nextClipIfChoiceSkipped: {fileID: 0}

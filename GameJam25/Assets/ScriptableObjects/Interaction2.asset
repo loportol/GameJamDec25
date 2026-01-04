@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1bc895c73a066a43b941376ab15b1a5, type: 3}
+  m_Name: Interaction2
+  m_EditorClassIdentifier: 
+  audioClip: {fileID: 8300000, guid: 3835333f430ac6540b345ff1dfb6c041, type: 3}
+  responses:
+  - response: Salmon?
+    numToSpawn: 1
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 11400000, guid: 23e4e2bd58799664096f171f44e4b41a, type: 2}
+  - response: I don't like salmon
+    numToSpawn: 1
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 11400000, guid: 23e4e2bd58799664096f171f44e4b41a, type: 2}
+  - response: You didn't remember.
+    numToSpawn: 1
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 11400000, guid: 23e4e2bd58799664096f171f44e4b41a, type: 2}
+  - response: It's whatever.
+    numToSpawn: 1
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 11400000, guid: 8f5d29b6f29d9ac4da7641ac031dc23e, type: 2}
+  - response: That's Fine.
+    numToSpawn: 1
+    choiceType: 2
+    spawnTime: 0
+    responseSize: 0
+    nextClipToPlay: {fileID: 11400000, guid: 756553920645ca44e834c1c90cfa33d8, type: 2}
+  clipLength: 7
+  nextClipIfChoiceSkipped: {fileID: 11400000, guid: 756553920645ca44e834c1c90cfa33d8, type: 2}
