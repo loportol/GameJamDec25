@@ -140,19 +140,19 @@ public void ChooseResponse(ClipResponse choice)
     }
 
     public float GetPlaybackTime()
-{
-    // how many seconds into the current audio clip we are
-    return audioSource != null ? audioSource.time : 0f;
-}
+    {
+        // how many seconds into the current audio clip we are
+        return audioSource != null ? audioSource.time : 0f;
+    }
 
-public bool IsPlaying()
-{
-    return audioSource != null && audioSource.isPlaying;
-}
+    public bool IsPlaying()
+    {
+        return audioSource != null && audioSource.isPlaying;
+    }
 
-public float GetCurrentClipLength()
-{
-    return (audioSource != null && audioSource.clip != null) ? audioSource.clip.length : 0f;
-}
+    public float GetCurrentClipLength()
+    {
+        return (audioSource != null && audioSource.clip != null) ? audioSource.clip.length : 0f;
+    }
 
 }
