@@ -1,18 +1,42 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Yarn.Unity;
 
 public class PauseMenuController : MonoBehaviour
 {
     [SerializeField] private GameObject pauseUI;
     private DialogueQTEManager qteManager;
     [SerializeField] private GameObject settingsUI;
+    private DialogueRunner yarnRunner;
+    private LinePresenter presenter;
+
 
     private void Awake()
     {
         // this finds the QTE manager in the scene once
         qteManager = Object.FindFirstObjectByType<DialogueQTEManager>();
-        if (qteManager == null )
-            Debug.LogWarning("Could not find the QTEManager, cannot pause timer");
+        if (qteManager == null)
+            Debug.LogWarning("Could not find the QTEManager in Awake, will try again when pausing.");
+        
+        // this finds the DialogueRunner in the scene once
+        yarnRunner = Object.FindFirstObjectByType<DialogueRunner>();
+        if (yarnRunner == null)
+            Debug.LogWarning("Could not find the DialogueRunner in Awake, will try again when pausing.");
+
+        presenter = Object.FindFirstObjectByType<LinePresenter>();
+        if (presenter == null)
+            Debug.LogWarning("Could not find LinePresenter in Awake; subtitles may not pause.");    
+    }
+
+    // make sure we ALWAYS have a reference even if something loaded weird / object changed
+    private void EnsureQTEManager()
+    {
+        if (qteManager == null)
+        {
+            qteManager = Object.FindFirstObjectByType<DialogueQTEManager>();
+            if (qteManager == null)
+                Debug.LogWarning("EnsureQTEManager: still could not find DialogueQTEManager.");
+        }
     }
 
     public void BackToGame()
@@ -25,17 +49,27 @@ public class PauseMenuController : MonoBehaviour
         pauseUI.gameObject.SetActive(false);
 
         // unpause logic for QTE/timer
+        EnsureQTEManager();
         if (qteManager != null)
         {
+            Debug.Log("BackToGame: calling qteManager.SetPaused(false)");
             qteManager.SetPaused(false);
         }
 
-        //Time.timeScale = 1f;
+        Time.timeScale = 1f;
 
         if (AudioClipManager.Instance != null)
         {
             AudioClipManager.Instance.PauseDialogue(false);
         }
+        if (yarnRunner != null)
+            yarnRunner.enabled = true;
+        
+        if (yarnRunner != null)
+            yarnRunner.enabled = true;
+
+        if (presenter != null)
+            presenter.enabled = true;
     }
 
     public void BackFromSettings()
@@ -68,17 +102,28 @@ public class PauseMenuController : MonoBehaviour
         pauseUI.gameObject.SetActive(true);
 
         // pause logic for QTE/timer
+        EnsureQTEManager();
         if (qteManager != null)
         {
+            Debug.Log("PauseGame: calling qteManager.SetPaused(true)");
             qteManager.SetPaused(true);
         }
 
-        //Time.timeScale = 0f;
+        Time.timeScale = 0f;
 
         if (AudioClipManager.Instance != null)
         {
             AudioClipManager.Instance.PauseDialogue(true);
         }
+
+        if (yarnRunner != null)
+            yarnRunner.enabled = false;
+        
+        if (yarnRunner != null)
+            yarnRunner.enabled = false;
+
+        if (presenter != null)
+            presenter.enabled = false;
     }
 
     public void LoadMainMenu()
@@ -88,11 +133,13 @@ public class PauseMenuController : MonoBehaviour
             UISFXManager.Instance.PlayClick();
         }
 
-        //Time.timeScale = 1f;
+        Time.timeScale = 1f;
 
         // unpause QTE if it exists so it doesn't stay paused after scene swap
+        EnsureQTEManager();
         if (qteManager != null)
         {
+            Debug.Log("LoadMainMenu: calling qteManager.SetPaused(false)");
             qteManager.SetPaused(false);
         }
 

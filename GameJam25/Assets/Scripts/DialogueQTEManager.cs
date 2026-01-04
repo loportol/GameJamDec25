@@ -102,14 +102,20 @@ public class DialogueQTEManager : MonoBehaviour
 
     private void OnDialogueEnded()
     {
-        // NOW the player is allowed to click
-        SetButtonsInteractable(true);
-        timerIsActive = true;
+    // if paused, don't start timer/click phase yet
+    if (isPaused) return;
 
-        timerSlider.gameObject.SetActive(true);
+    // safety: only enter response window if audio is REALLY done
+    if (AudioClipManager.Instance != null && AudioClipManager.Instance.IsDialogueActive())
+        return;
 
-        if (timerRoutine != null) StopCoroutine(timerRoutine);
-        timerRoutine = StartCoroutine(ResponseTimer());
+    SetButtonsInteractable(true);
+    timerIsActive = true;
+
+    timerSlider.gameObject.SetActive(true);
+
+    if (timerRoutine != null) StopCoroutine(timerRoutine);
+    timerRoutine = StartCoroutine(ResponseTimer());
     }
 
     private IEnumerator SpawnDuringAudio(AudioClipSO clip)
@@ -181,7 +187,7 @@ public class DialogueQTEManager : MonoBehaviour
             yield break;
         }
 
-        while (AudioClipManager.Instance.IsPlaying() && AudioClipManager.Instance.GetPlaybackTime() < targetSeconds)
+        while (AudioClipManager.Instance.IsDialogueActive() && AudioClipManager.Instance.GetPlaybackTime() < targetSeconds)
         {
             // stop progressing while paused
             if (isPaused)
@@ -216,7 +222,7 @@ public class DialogueQTEManager : MonoBehaviour
             if (useAudioTime)
             {
                 float start = AudioClipManager.Instance.GetPlaybackTime();
-                while (AudioClipManager.Instance.IsPlaying() && (AudioClipManager.Instance.GetPlaybackTime() - start) < wait)
+                while (AudioClipManager.Instance.IsDialogueActive() && (AudioClipManager.Instance.GetPlaybackTime() - start) < wait)
                 {
                     // freeze this wait while paused
                     if (isPaused)
