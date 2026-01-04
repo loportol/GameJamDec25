@@ -7,12 +7,11 @@ public class StartUIManager : MonoBehaviour
     [Header("Panels")]
     [SerializeField] private Image blackFade;
 
-    [SerializeField] private float m_fadeDuration = 5f;
-    [SerializeField] private float m_stayDuration = 2f;
-    [SerializeField] private AnimationCurve m_smoothCurve = new AnimationCurve(new Keyframe[] { new Keyframe(0f, 0f), new Keyframe(1f, 1f) });
+    [SerializeField] private float fadeDuration = 5f;
+    [SerializeField] private AnimationCurve smoothCurve = new AnimationCurve(new Keyframe[] { new Keyframe(0f, 0f), new Keyframe(1f, 1f) });
 
-    private readonly WaitForSeconds m_skipFrame = new WaitForSeconds(0.01f);
-    private float m_timerCurrent;
+    private readonly WaitForSeconds skipFrame = new WaitForSeconds(0.0001f);
+    private float timerCurrent;
 
     [Header("Clips")]
     [SerializeField] private AudioClip doorOpen;
@@ -49,14 +48,14 @@ public class StartUIManager : MonoBehaviour
 
     private IEnumerator DoFade(float start, float end)
     {
-        m_timerCurrent = 0f;
+        timerCurrent = 0f;
 
-        while (m_timerCurrent <= m_fadeDuration)
+        while (timerCurrent <= fadeDuration)
         {
-            m_timerCurrent += Time.deltaTime;
+            timerCurrent += Time.deltaTime;
             Color c = blackFade.color;
-            blackFade.color = new Color(c.r, c.g, c.b, Mathf.Lerp(start, end, m_smoothCurve.Evaluate(m_timerCurrent / m_fadeDuration)));
-            yield return m_skipFrame;
+            blackFade.color = new Color(c.r, c.g, c.b, Mathf.Lerp(start, end, smoothCurve.Evaluate(timerCurrent / fadeDuration)));
+            yield return skipFrame;
         }
     }
 
