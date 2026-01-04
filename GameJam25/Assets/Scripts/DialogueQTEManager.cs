@@ -42,6 +42,9 @@ public class DialogueQTEManager : MonoBehaviour
     private Coroutine timerRoutine;
     private Coroutine spawnRoutine;
 
+    private bool isPaused = false;
+    private bool timerIsActive = false;
+
     private void Start()
     {
         // dialogue starts, spawn thoughts (NOT clickable yet)
@@ -54,6 +57,31 @@ public class DialogueQTEManager : MonoBehaviour
         timerSlider.maxValue = responseTime;
         timerSlider.value = responseTime;
         timerSlider.gameObject.SetActive(false);
+    }
+
+    public void SetPaused(bool paused)
+    {
+        isPaused = paused;
+
+        // while paused, don't allow clicks
+        SetButtonsInteractable(!paused);
+
+        // hide timer UI while paused so it doesn't look like it's draining
+        if (timerSlider != null)
+        {
+            if (paused)
+            {
+                timerSlider.gameObject.SetActive(false);
+            }
+            else
+            {
+                // only show timer again if we are currently in the response window
+                if (timerIsActive)
+                {
+                    timerSlider.gameObject.SetActive(true);
+                }
+            }
+        }
     }
 
     private void OnDialogueStarted(AudioClipSO clip)
@@ -70,6 +98,7 @@ public class DialogueQTEManager : MonoBehaviour
     {
         // NOW the player is allowed to click
         SetButtonsInteractable(true);
+        timerIsActive = true;
 
         timerSlider.gameObject.SetActive(true);
 
@@ -107,6 +136,8 @@ public class DialogueQTEManager : MonoBehaviour
         // for each interaction timestamp: wait until that time -> then drip-spawn its buttons
         for (int idx = 0; idx < ordered.Count; idx++)
         {
+            while (isPaused) yield return null;
+
             ClipResponse cr = ordered[idx];
 
             float startTime = Mathf.Max(0f, cr.spawnTime);
@@ -131,12 +162,28 @@ public class DialogueQTEManager : MonoBehaviour
         if (!useAudioTime)
         {
             // fallback: just wait real time 
-            yield return new WaitForSeconds(targetSeconds);
+            // pause safe waiting
+            float waited = 0f;
+            while (waited < targetSeconds)
+            {
+                if (!isPaused)
+                {
+                    waited += Time.deltaTime;
+                }
+                yield return null;
+            }
             yield break;
         }
 
         while (AudioClipManager.Instance.IsPlaying() && AudioClipManager.Instance.GetPlaybackTime() < targetSeconds)
         {
+            // stop progressing while paused
+            if (isPaused)
+            {
+                yield return null;
+                continue;
+            }
+
             yield return null;
         }
     }
@@ -148,10 +195,13 @@ public class DialogueQTEManager : MonoBehaviour
         int count = Mathf.Max(1, clipResponse.numToSpawn);
 
         float interval = (count <= 1) ? spawnWindowSeconds : (spawnWindowSeconds / (count - 1));
-        interval = Mathf.Max(0.01f, interval); 
+        interval = Mathf.Max(0.01f, interval);
 
         for (int i = 0; i < count; i++)
         {
+            // if paused -> don’t spawn during pause
+            while (isPaused) yield return null;
+
             SpawnOneThoughtButton(clipResponse);
 
             // tiny delay makes it feel more organic
@@ -162,12 +212,28 @@ public class DialogueQTEManager : MonoBehaviour
                 float start = AudioClipManager.Instance.GetPlaybackTime();
                 while (AudioClipManager.Instance.IsPlaying() && (AudioClipManager.Instance.GetPlaybackTime() - start) < wait)
                 {
+                    // freeze this wait while paused
+                    if (isPaused)
+                    {
+                        start = AudioClipManager.Instance.GetPlaybackTime(); // reset so we don't "skip" time after pause
+                        yield return null;
+                        continue;
+                    }
+
                     yield return null;
                 }
             }
             else
             {
-                yield return new WaitForSeconds(wait);
+                float waited = 0f;
+                while (waited < wait)
+                {
+                    if (!isPaused)
+                    {
+                        waited += Time.deltaTime;
+                    }
+                    yield return null;
+                }
             }
         }
     }
@@ -271,6 +337,13 @@ public class DialogueQTEManager : MonoBehaviour
 
         while (timeRemaining > 0f && !responded)
         {
+            // freeze timer while paused
+            if (isPaused)
+            {
+                yield return null;
+                continue;
+            }
+
             timeRemaining -= Time.deltaTime;
             timerSlider.value = timeRemaining;
             yield return null;
@@ -278,6 +351,7 @@ public class DialogueQTEManager : MonoBehaviour
 
         timerSlider.value = 0f;
         timerSlider.gameObject.SetActive(false);
+        timerIsActive = false;
 
         if (!responded)
         {
@@ -289,6 +363,7 @@ public class DialogueQTEManager : MonoBehaviour
     private void OnResponseSelected(ClipResponse chosen)
     {
         responded = true;
+        timerIsActive = false;
 
         // stop timer if running
         if (timerRoutine != null) StopCoroutine(timerRoutine);
