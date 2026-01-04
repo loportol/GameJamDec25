@@ -401,8 +401,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2f12fead9c89a04a95ac39eff1a6c6f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cursorDefault: {fileID: 2800000, guid: f438f3b6e2413c64292ca97546f1d06d, type: 3}
-  cursorGrab: {fileID: 2800000, guid: 5879de9871208e24bb4f3f3b22b986a1, type: 3}
+  cursorDefault: {fileID: 2800000, guid: 0ada71680ba4eac4d8219c8514f37b77, type: 3}
+  cursorGrab: {fileID: 2800000, guid: 9ce5a7ca3d3eddc4ebf923ec5c47c7cd, type: 3}
 --- !u!1 &540537675
 GameObject:
   m_ObjectHideFlags: 0
