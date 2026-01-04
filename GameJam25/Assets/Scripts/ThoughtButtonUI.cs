@@ -33,6 +33,10 @@ public class ThoughtButtonUI : MonoBehaviour
     // Called by the Unity Button OnClick() event.
     public void OnClick()
     {
+        if (UISFXManager.Instance != null)
+    {
+        UISFXManager.Instance.PlayClick();
+    }
         onSelected?.Invoke(responseData);
         Destroy(gameObject); // remove after click so the screen clears naturally
     }
