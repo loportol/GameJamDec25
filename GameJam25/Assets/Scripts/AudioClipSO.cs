@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Drawing;
 using UnityEngine;
 
 [System.Serializable]
@@ -16,10 +15,22 @@ public class ClipResponse
 [CreateAssetMenu(menuName = "Scriptable Objects/Audio Clip")]
 public class AudioClipSO : ScriptableObject
 {
-    [SerializeField] private AudioClip audioClip; 
+    [SerializeField] private AudioClip audioClip;
     [SerializeField] private List<ClipResponse> responses;
     [SerializeField] private float clipLength;
     [SerializeField] private AudioClipSO nextClipIfChoiceSkipped;
+
+    [Header("Ending")]
+    [SerializeField] private bool isEnding = false;
+    [SerializeField] private ChoiceType endingType = ChoiceType.Timid;
+
+    [SerializeField] private string endingTitle;
+
+    [TextArea(3, 6)]
+    [SerializeField] private string endingBody;
+
+    [SerializeField] private float endingHoldSeconds = 6f;
+
 
     public List<ClipResponse> GetResponses()
     {
@@ -39,5 +50,31 @@ public class AudioClipSO : ScriptableObject
     public AudioClipSO GetNextClipIfChoiceSkipped()
     {
         return nextClipIfChoiceSkipped;
+    }
+
+    // ending getters
+    public bool IsEnding()
+    {
+        return isEnding;
+    }
+
+    public ChoiceType GetEndingType()
+    {
+        return endingType;
+    }
+
+    public string GetEndingTitle()
+    {
+        return endingTitle;
+    }
+
+    public string GetEndingBody()
+    {
+        return endingBody;
+    }
+
+    public float GetEndingHoldSeconds()
+    {
+        return endingHoldSeconds;
     }
 }

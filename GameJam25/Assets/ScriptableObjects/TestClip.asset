@@ -34,3 +34,8 @@ MonoBehaviour:
     nextClipToPlay: {fileID: 11400000, guid: 491a695b90d5d0946aaa8de753beabef, type: 2}
   clipLength: 5
   nextClipIfChoiceSkipped: {fileID: 11400000}
+  isEnding: 0
+  endingType: 2
+  endingTitle: 
+  endingBody: 
+  endingHoldSeconds: 6
