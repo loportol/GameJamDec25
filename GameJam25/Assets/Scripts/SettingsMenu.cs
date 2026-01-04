@@ -6,21 +6,27 @@ public class SettingsMenu : MonoBehaviour
     [Header("Sliders")]
     [SerializeField] private Slider musicSlider;
     [SerializeField] private Slider dialogueSlider;
+    [SerializeField] private Slider sfxSlider;
 
-    [Header("Targets")]
-    [SerializeField] private SceneMusicPlayer musicPlayer;     // drag MenuMusic object here (optional now)
-    [SerializeField] private AudioClipManager dialogueManager; // drag AudioManager object here (optional now)
+    [Header("Targets (optional drag+drop)")]
+    [SerializeField] private SceneMusicPlayer musicPlayer;     
+    [SerializeField] private AudioClipManager dialogueManager; 
+    [SerializeField] private UISFXManager sfxManager;
 
     private const string MUSIC_KEY = "music_volume";
     private const string DIALOGUE_KEY = "dialogue_volume";
+    private const string SFX_KEY = "sfx_volume";
 
     private void Start()
     {
         float savedMusic = PlayerPrefs.GetFloat(MUSIC_KEY, 0.35f);
         float savedDialogue = PlayerPrefs.GetFloat(DIALOGUE_KEY, 1f);
+        float savedSfx = PlayerPrefs.GetFloat(SFX_KEY, 0.6f);
 
-        // keep global music volume in sync even before we touch sliders
+        // keep globals synced so they apply across scenes
         SceneMusicPlayer.GlobalMusicVolume = savedMusic;
+        AudioClipManager.GlobalDialogueVolume = savedDialogue;
+        UISFXManager.GlobalSfxVolume = savedSfx;
 
         if (musicSlider != null)
         {
@@ -38,36 +44,40 @@ public class SettingsMenu : MonoBehaviour
             dialogueSlider.onValueChanged.AddListener(SetDialogueVolume);
         }
 
-        // apply immediately so you hear it right away
+        if (sfxSlider != null)
+        {
+            sfxSlider.minValue = 0f;
+            sfxSlider.maxValue = 1f;
+            sfxSlider.value = savedSfx;
+            sfxSlider.onValueChanged.AddListener(SetSfxVolume);
+        }
+
+        // apply immediately
         SetMusicVolume(savedMusic);
         SetDialogueVolume(savedDialogue);
+        SetSfxVolume(savedSfx);
     }
 
     public void SetMusicVolume(float value)
     {
         PlayerPrefs.SetFloat(MUSIC_KEY, value);
-
-        // ALWAYS update global so it carries across scenes
         SceneMusicPlayer.GlobalMusicVolume = value;
 
-        // If you dragged a specific music player, update it (this will update both menu+game via SceneMusicPlayer)
         if (musicPlayer != null)
         {
             musicPlayer.SetMusicVolume(value);
             return;
         }
 
-        // fallback: find any SceneMusicPlayer in the scene and update it
-        SceneMusicPlayer found = FindObjectOfType<SceneMusicPlayer>();
-        if (found != null)
-        {
-            found.SetMusicVolume(value);
-        }
+        // Unity 2023+ replacement for FindObjectOfType
+        SceneMusicPlayer found = Object.FindFirstObjectByType<SceneMusicPlayer>();
+        if (found != null) found.SetMusicVolume(value);
     }
 
     public void SetDialogueVolume(float value)
     {
         PlayerPrefs.SetFloat(DIALOGUE_KEY, value);
+        AudioClipManager.GlobalDialogueVolume = value;
 
         if (dialogueManager != null)
         {
@@ -75,11 +85,22 @@ public class SettingsMenu : MonoBehaviour
             return;
         }
 
-        // fallback: dialogue manager only exists in playable scene
-        AudioClipManager found = FindObjectOfType<AudioClipManager>();
-        if (found != null)
+        AudioClipManager found = Object.FindFirstObjectByType<AudioClipManager>();
+        if (found != null) found.SetDialogueVolume(value);
+    }
+
+    public void SetSfxVolume(float value)
+    {
+        PlayerPrefs.SetFloat(SFX_KEY, value);
+        UISFXManager.GlobalSfxVolume = value;
+
+        if (sfxManager != null)
         {
-            found.SetDialogueVolume(value);
+            sfxManager.SetSfxVolume(value);
+            return;
         }
+
+        UISFXManager found = Object.FindFirstObjectByType<UISFXManager>();
+        if (found != null) found.SetSfxVolume(value);
     }
 }

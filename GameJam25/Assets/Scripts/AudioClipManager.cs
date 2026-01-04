@@ -24,6 +24,8 @@ public class AudioClipManager : MonoBehaviour
     public static AudioClipManager Instance { get; private set; }
     private AudioSource audioSource;
     private AudioClipSO clipToPlay;
+    public static float GlobalDialogueVolume = 1f;
+    private const string DIALOGUE_KEY = "dialogue_volume";
 
     private void Awake()
     {
@@ -36,6 +38,10 @@ public class AudioClipManager : MonoBehaviour
         Instance = this;
         audioSource = GetComponent<AudioSource>();
         clipToPlay = startingAudioClip;
+        // load saved dialogue volume and apply to the dialogue AudioSource
+        GlobalDialogueVolume = PlayerPrefs.GetFloat(DIALOGUE_KEY, GlobalDialogueVolume);
+        audioSource.volume = GlobalDialogueVolume;
+
     }
 
     private void Update()
@@ -58,15 +64,18 @@ public class AudioClipManager : MonoBehaviour
     }
     public void SetDialogueVolume(float value)
 {
+    GlobalDialogueVolume = value;
+    PlayerPrefs.SetFloat(DIALOGUE_KEY, value);
+
     if (audioSource != null)
     {
-        audioSource.volume = value;
+        audioSource.volume = GlobalDialogueVolume;
     }
 }
 
 public float GetDialogueVolume()
 {
-    return (audioSource != null) ? audioSource.volume : 1f;
+    return GlobalDialogueVolume;
 }
 
     private IEnumerator PlayDialogueCoroutine(AudioClipSO clip)

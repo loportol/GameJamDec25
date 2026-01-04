@@ -13,6 +13,8 @@ public class UISFXManager : MonoBehaviour
     [SerializeField] private float pitchMax = 1.03f;
 
     private AudioSource source;
+    public static float GlobalSfxVolume = 0.6f;
+    private const string SFX_KEY = "sfx_volume";
 
     private void Awake()
     {
@@ -29,7 +31,13 @@ public class UISFXManager : MonoBehaviour
         source.playOnAwake = false;
         source.loop = false;
         source.spatialBlend = 0f; // 2D
-    }
+        GlobalSfxVolume = PlayerPrefs.GetFloat(SFX_KEY, GlobalSfxVolume);
+        if (!PlayerPrefs.HasKey("sfx_volume"))
+        {
+            PlayerPrefs.SetFloat("sfx_volume", clickVolume);
+        }
+        GlobalSfxVolume = PlayerPrefs.GetFloat("sfx_volume", clickVolume);
+        }
 
     public void PlayClick()
     {
@@ -37,6 +45,11 @@ public class UISFXManager : MonoBehaviour
 
         // tiny pitch randomization 
         source.pitch = Random.Range(pitchMin, pitchMax);
-        source.PlayOneShot(clickClip, clickVolume);
+        source.PlayOneShot(clickClip, GlobalSfxVolume);
     }
+    public void SetSfxVolume(float value)
+{
+    GlobalSfxVolume = value;
+    PlayerPrefs.SetFloat(SFX_KEY, value);
+}
 }
