@@ -44,6 +44,8 @@ public class DialogueQTEManager : MonoBehaviour
 
     private bool isPaused = false;
     private bool timerIsActive = false;
+    private bool inResponseWindow = false; // only true AFTER audio ends
+
 
     private MomPortraitRoutes portraitManager;
 
@@ -69,8 +71,8 @@ public class DialogueQTEManager : MonoBehaviour
     {
         isPaused = paused;
 
-        // while paused, don't allow clicks
-        SetButtonsInteractable(!paused);
+        // Only allow clicking if we're NOT paused AND we're in the response window
+        SetButtonsInteractable(!paused && inResponseWindow);
 
         // hide timer UI while paused so it doesn't look like it's draining
         if (timerSlider != null)
@@ -93,6 +95,7 @@ public class DialogueQTEManager : MonoBehaviour
     private void OnDialogueStarted(AudioClipSO clip)
     {
         responded = false;
+        inResponseWindow = false; // audio is playing, no clicking
         ClearButtons();
         timerSlider.gameObject.SetActive(false);
 
@@ -102,14 +105,23 @@ public class DialogueQTEManager : MonoBehaviour
 
     private void OnDialogueEnded()
     {
-        // NOW the player is allowed to click
-        SetButtonsInteractable(true);
-        timerIsActive = true;
+    // if paused, don't start timer/click phase yet
+    if (isPaused) return;
 
-        timerSlider.gameObject.SetActive(true);
+    inResponseWindow = true; // now clicking is allowed
 
-        if (timerRoutine != null) StopCoroutine(timerRoutine);
-        timerRoutine = StartCoroutine(ResponseTimer());
+    // safety: only enter response window if audio is REALLY done
+    if (AudioClipManager.Instance != null && AudioClipManager.Instance.IsDialogueActive())
+        return;
+
+    SetButtonsInteractable(true);
+    timerIsActive = true;
+
+    timerSlider.gameObject.SetActive(true);
+
+    if (timerRoutine != null) StopCoroutine(timerRoutine);
+    timerRoutine = StartCoroutine(ResponseTimer());
+    
     }
 
     private IEnumerator SpawnDuringAudio(AudioClipSO clip)
@@ -181,7 +193,7 @@ public class DialogueQTEManager : MonoBehaviour
             yield break;
         }
 
-        while (AudioClipManager.Instance.IsPlaying() && AudioClipManager.Instance.GetPlaybackTime() < targetSeconds)
+        while (AudioClipManager.Instance.IsDialogueActive() && AudioClipManager.Instance.GetPlaybackTime() < targetSeconds)
         {
             // stop progressing while paused
             if (isPaused)
@@ -216,7 +228,7 @@ public class DialogueQTEManager : MonoBehaviour
             if (useAudioTime)
             {
                 float start = AudioClipManager.Instance.GetPlaybackTime();
-                while (AudioClipManager.Instance.IsPlaying() && (AudioClipManager.Instance.GetPlaybackTime() - start) < wait)
+                while (AudioClipManager.Instance.IsDialogueActive() && (AudioClipManager.Instance.GetPlaybackTime() - start) < wait)
                 {
                     // freeze this wait while paused
                     if (isPaused)
