@@ -13,6 +13,41 @@ MonoBehaviour:
   m_Name: Interaction6b
   m_EditorClassIdentifier: 
   audioClip: {fileID: 8300000, guid: 4936e691753388a4da36dc3d0505a3d7, type: 3}
-  responses: []
-  clipLength: 0
-  nextClipIfChoiceSkipped: {fileID: 0}
+  responses:
+  - response: I love you too, Mom.
+    numToSpawn: 1
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 1
+    nextClipToPlay: {fileID: 11400000, guid: c391bed8551240442a4e3cd58584d4ae, type: 2}
+  - response: "That\u2019s nice, Mom"
+    numToSpawn: 1
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 1
+    nextClipToPlay: {fileID: 11400000, guid: c391bed8551240442a4e3cd58584d4ae, type: 2}
+  - response: "I\u2019ll do my best for you"
+    numToSpawn: 1
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 1
+    nextClipToPlay: {fileID: 11400000, guid: c391bed8551240442a4e3cd58584d4ae, type: 2}
+  - response: I try my best
+    numToSpawn: 1
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 1
+    nextClipToPlay: {fileID: 11400000, guid: c391bed8551240442a4e3cd58584d4ae, type: 2}
+  - response: "I\u2019ve decided to drop out of school"
+    numToSpawn: 1
+    choiceType: 2
+    spawnTime: 0
+    responseSize: 1
+    nextClipToPlay: {fileID: 11400000, guid: f884321f09bf1a8408b09d4c6a683483, type: 2}
+  clipLength: 12
+  nextClipIfChoiceSkipped: {fileID: 11400000, guid: c391bed8551240442a4e3cd58584d4ae, type: 2}
+  isEnding: 0
+  endingType: 1
+  endingTitle: 
+  endingBody: 
+  endingHoldSeconds: 6

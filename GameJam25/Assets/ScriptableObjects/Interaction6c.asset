@@ -13,6 +13,17 @@ MonoBehaviour:
   m_Name: Interaction6c
   m_EditorClassIdentifier: 
   audioClip: {fileID: 8300000, guid: fbbe91c2f2a19d24c8b1f52990f863ff, type: 3}
-  responses: []
-  clipLength: 0
-  nextClipIfChoiceSkipped: {fileID: 0}
+  responses:
+  - response: I'm sorry
+    numToSpawn: 50
+    choiceType: 2
+    spawnTime: 1
+    responseSize: 1
+    nextClipToPlay: {fileID: 11400000, guid: 7567cf983d5d52842be59c938b170fd6, type: 2}
+  clipLength: 6
+  nextClipIfChoiceSkipped: {fileID: 11400000, guid: 7567cf983d5d52842be59c938b170fd6, type: 2}
+  isEnding: 0
+  endingType: 1
+  endingTitle: 
+  endingBody: 
+  endingHoldSeconds: 6

@@ -13,6 +13,17 @@ MonoBehaviour:
   m_Name: Interaction7c
   m_EditorClassIdentifier: 
   audioClip: {fileID: 8300000, guid: c1d0dd0c01d108d418de8f992163b6f1, type: 3}
-  responses: []
+  responses:
+  - response: I love you, Mom
+    numToSpawn: 1
+    choiceType: 2
+    spawnTime: 0
+    responseSize: 1
+    nextClipToPlay: {fileID: 0}
   clipLength: 0
   nextClipIfChoiceSkipped: {fileID: 0}
+  isEnding: 1
+  endingType: 2
+  endingTitle: 
+  endingBody: 
+  endingHoldSeconds: 6

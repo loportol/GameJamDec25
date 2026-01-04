@@ -18,25 +18,48 @@ MonoBehaviour:
     numToSpawn: 1
     choiceType: 0
     spawnTime: 0
-    responseSize: 0
-    nextClipToPlay: {fileID: 0}
+    responseSize: 1
+    nextClipToPlay: {fileID: 11400000, guid: e18fe0f3a3f1d804aa2857ee70a5a373, type: 2}
   - response: Just leave me alone!
     numToSpawn: 1
     choiceType: 0
     spawnTime: 0
-    responseSize: 0
-    nextClipToPlay: {fileID: 0}
+    responseSize: 1
+    nextClipToPlay: {fileID: 11400000, guid: e18fe0f3a3f1d804aa2857ee70a5a373, type: 2}
   - response: "I don\u2019t know why I asked you here."
     numToSpawn: 1
     choiceType: 0
     spawnTime: 0
-    responseSize: 0
-    nextClipToPlay: {fileID: 0}
+    responseSize: 1
+    nextClipToPlay: {fileID: 11400000, guid: e18fe0f3a3f1d804aa2857ee70a5a373, type: 2}
   - response: "I\u2019ve had enough."
     numToSpawn: 1
     choiceType: 0
     spawnTime: 0
-    responseSize: 0
-    nextClipToPlay: {fileID: 0}
-  clipLength: 0
-  nextClipIfChoiceSkipped: {fileID: 0}
+    responseSize: 1
+    nextClipToPlay: {fileID: 11400000, guid: e18fe0f3a3f1d804aa2857ee70a5a373, type: 2}
+  - response: "I can\u2019t do this anymore."
+    numToSpawn: 1
+    choiceType: 0
+    spawnTime: 0
+    responseSize: 1
+    nextClipToPlay: {fileID: 11400000, guid: e18fe0f3a3f1d804aa2857ee70a5a373, type: 2}
+  - response: "Let\u2019s just drop it."
+    numToSpawn: 1
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 1
+    nextClipToPlay: {fileID: 11400000, guid: c391bed8551240442a4e3cd58584d4ae, type: 2}
+  - response: "You\u2019re right"
+    numToSpawn: 1
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 1
+    nextClipToPlay: {fileID: 11400000, guid: c391bed8551240442a4e3cd58584d4ae, type: 2}
+  clipLength: 24
+  nextClipIfChoiceSkipped: {fileID: 11400000, guid: c391bed8551240442a4e3cd58584d4ae, type: 2}
+  isEnding: 0
+  endingType: 1
+  endingTitle: 
+  endingBody: 
+  endingHoldSeconds: 6

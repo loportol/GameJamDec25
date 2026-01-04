@@ -13,6 +13,35 @@ MonoBehaviour:
   m_Name: Interaction7b
   m_EditorClassIdentifier: 
   audioClip: {fileID: 8300000, guid: 37fd7b1df229fe3429dad8293425efc7, type: 3}
-  responses: []
-  clipLength: 0
+  responses:
+  - response: "I didn\u2019t tell her"
+    numToSpawn: 5
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 1
+    nextClipToPlay: {fileID: 0}
+  - response: "I can\u2019t tell her."
+    numToSpawn: 5
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 1
+    nextClipToPlay: {fileID: 0}
+  - response: "I can\u2019t do it."
+    numToSpawn: 5
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 1
+    nextClipToPlay: {fileID: 0}
+  - response: "She won\u2019t understand."
+    numToSpawn: 5
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 1
+    nextClipToPlay: {fileID: 0}
+  clipLength: 19
   nextClipIfChoiceSkipped: {fileID: 0}
+  isEnding: 1
+  endingType: 1
+  endingTitle: 
+  endingBody: 
+  endingHoldSeconds: 6

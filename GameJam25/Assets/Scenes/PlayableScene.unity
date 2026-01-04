@@ -684,7 +684,7 @@ MonoBehaviour:
   endingReached:
     m_PersistentCalls:
       m_Calls: []
-  startingAudioClip: {fileID: 11400000, guid: ea76574311b95e143aceedd54995ce28, type: 2}
+  startingAudioClip: {fileID: 11400000, guid: d364dd257503bb547834ee65982e3375, type: 2}
 --- !u!1 &582242931
 GameObject:
   m_ObjectHideFlags: 0
