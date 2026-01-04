@@ -45,6 +45,8 @@ public class DialogueQTEManager : MonoBehaviour
     private bool isPaused = false;
     private bool timerIsActive = false;
 
+    private MomPortraitRoutes portraitManager;
+
     private void Start()
     {
         // dialogue starts, spawn thoughts (NOT clickable yet)
@@ -57,6 +59,10 @@ public class DialogueQTEManager : MonoBehaviour
         timerSlider.maxValue = responseTime;
         timerSlider.value = responseTime;
         timerSlider.gameObject.SetActive(false);
+
+        portraitManager = Object.FindFirstObjectByType<MomPortraitRoutes>();
+        if (portraitManager == null)
+            Debug.Log("Could not find MomPortraitRoutes, can't set portrait for mom");
     }
 
     public void SetPaused(bool paused)
@@ -357,6 +363,7 @@ public class DialogueQTEManager : MonoBehaviour
         {
             ClearButtons();
             AudioClipManager.Instance.PlayDialogue();
+            portraitManager.SetRouteSprite(ChoiceType.Timid);
         }
     }
 
@@ -373,6 +380,7 @@ public class DialogueQTEManager : MonoBehaviour
 
         // tell audio manager what consequence to play next
         AudioClipManager.Instance.ChooseResponse(chosen);
+        portraitManager.SetRouteSprite(chosen.choiceType);
     }
 
     private void SetButtonsInteractable(bool canClick)

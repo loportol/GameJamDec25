@@ -12,9 +12,7 @@ public class PauseMenuController : MonoBehaviour
         // this finds the QTE manager in the scene once
         qteManager = Object.FindFirstObjectByType<DialogueQTEManager>();
         if (qteManager == null )
-        {
             Debug.LogWarning("Could not find the QTEManager, cannot pause timer");
-        }
     }
 
     public void BackToGame()
