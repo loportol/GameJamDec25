@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
+using TMPro;
 
 public class DialogueQTEManager : MonoBehaviour
 {
@@ -119,7 +120,7 @@ public class DialogueQTEManager : MonoBehaviour
 
         inResponseWindow = true; // now clicking is allowed
 
-        // safety: only enter response window if audio is REALLY done
+        // only enter response window if audio is REALLY done
         if (AudioClipManager.Instance != null && AudioClipManager.Instance.IsDialogueActive())
             return;
 
@@ -224,7 +225,7 @@ public class DialogueQTEManager : MonoBehaviour
         {
             while (isPaused) yield return null;
 
-            // IMPORTANT: spawn as coroutine so we can wait a frame and lock size before placing
+            // spawn as coroutine so we can wait a frame and lock size before placing
             yield return StartCoroutine(SpawnOneThoughtButtonCoroutine(clipResponse));
 
             float wait = interval + extraDelayBetweenThoughts;
@@ -267,7 +268,7 @@ public class DialogueQTEManager : MonoBehaviour
         RectTransform rect = buttonObj.GetComponent<RectTransform>();
         ThoughtButtonUI button = buttonObj.GetComponent<ThoughtButtonUI>();
 
-        // set content FIRST (this usually changes TMP size)
+        // set content FIRST 
         button.Setup(clipResponse, OnResponseSelected);
 
         // Let TMP/layout compute sizes (THIS is the missing piece that causes "overlap later")
@@ -450,6 +451,103 @@ public class DialogueQTEManager : MonoBehaviour
         {
             if (button != null) button.SetInteractable(canClick);
         }
+    }
+
+    // ENDING THOUGHTS SYSTEM 
+
+    public void PlayEndingThoughts(ChoiceType endingType, string focusedText = "I can do this.")
+    {
+        StopAllCoroutines();
+
+        responded = false;
+        timerIsActive = false;
+        inResponseWindow = false;
+
+        if (timerSlider != null)
+            timerSlider.gameObject.SetActive(false);
+
+        ClearButtons();
+        SetButtonsInteractable(false);
+
+        if (endingType == ChoiceType.Focused)
+        {
+            StartCoroutine(SpawnFocusedEndingThought(focusedText));
+        }
+        else
+        {
+            StartCoroutine(SpawnOverwhelmingEndingThoughts());
+        }
+    }
+
+    private IEnumerator SpawnFocusedEndingThought(string text)
+    {
+        yield return StartCoroutine(SpawnEndingThoughtButton(text, 1.0f));
+    }
+
+    private IEnumerator SpawnOverwhelmingEndingThoughts()
+    {
+        int count = 22;
+        float delay = 0.04f;
+        float scale = 0.9f;
+
+        string[] pool = new string[]
+        {
+            "too much", "stop", "i can't", "what if i'm wrong",
+            "i'm sorry", "she hates me", "i'm stuck",
+            "everything is loud", "i can't breathe", "make it stop"
+        };
+
+        for (int i = 0; i < count; i++)
+        {
+            string t = pool[Random.Range(0, pool.Length)];
+            yield return StartCoroutine(SpawnEndingThoughtButton(t, scale));
+            yield return new WaitForSecondsRealtime(delay);
+        }
+    }
+
+    private IEnumerator SpawnEndingThoughtButton(string buttonText, float scale)
+    {
+        GameObject buttonObj = Instantiate(thoughtButtonPrefab, spawnAreaRect);
+        buttonObj.transform.localScale *= scale;
+
+        RectTransform rect = buttonObj.GetComponent<RectTransform>();
+
+        // set TMP text directly (no ClipResponse required)
+        TMP_Text tmp = buttonObj.GetComponentInChildren<TMP_Text>(true);
+        if (tmp != null) tmp.text = buttonText;
+
+        // wait a frame so TMP + layout calculates proper size
+        yield return null;
+
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+
+        // lock size so it can't expand later
+        LayoutElement le = buttonObj.GetComponent<LayoutElement>();
+        if (le == null) le = buttonObj.AddComponent<LayoutElement>();
+        le.preferredWidth = rect.rect.width;
+        le.preferredHeight = rect.rect.height;
+
+        ContentSizeFitter csf = buttonObj.GetComponent<ContentSizeFitter>();
+        if (csf != null) csf.enabled = false;
+
+        HorizontalLayoutGroup hlg = buttonObj.GetComponent<HorizontalLayoutGroup>();
+        if (hlg != null) hlg.enabled = false;
+
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+
+        rect.anchoredPosition = GetSpiralSpawnPosition(rect);
+
+        // make sure it cannot be clicked
+        ThoughtButtonUI tb = buttonObj.GetComponent<ThoughtButtonUI>();
+        if (tb != null) tb.SetInteractable(false);
+
+        Button unityBtn = buttonObj.GetComponent<Button>();
+        if (unityBtn != null) unityBtn.interactable = false;
+
+        if (tb != null)
+            activeButtons.Add(tb);
     }
 
     private void ClearButtons()
