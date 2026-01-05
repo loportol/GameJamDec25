@@ -53,24 +53,6 @@ MonoBehaviour:
   - response: I hoped we could talk today.
     numToSpawn: 1
     choiceType: 2
-    spawnTime: 10
-    responseSize: 1
-    nextClipToPlay: {fileID: 11400000, guid: 8b3ae79781452224daae89319beca8a9, type: 2}
-  - response: I hoped we could talk today.
-    numToSpawn: 1
-    choiceType: 2
-    spawnTime: 20
-    responseSize: 1
-    nextClipToPlay: {fileID: 11400000, guid: 8b3ae79781452224daae89319beca8a9, type: 2}
-  - response: I hoped we could talk today.
-    numToSpawn: 1
-    choiceType: 2
-    spawnTime: 20
-    responseSize: 1
-    nextClipToPlay: {fileID: 11400000, guid: 8b3ae79781452224daae89319beca8a9, type: 2}
-  - response: I hoped we could talk today.
-    numToSpawn: 1
-    choiceType: 2
     spawnTime: 4
     responseSize: 1.4
     nextClipToPlay: {fileID: 11400000, guid: 8b3ae79781452224daae89319beca8a9, type: 2}
