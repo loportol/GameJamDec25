@@ -82,15 +82,21 @@ public class AudioClipManager : MonoBehaviour
     {
         if (audioSource.isPlaying) return;
         Debug.Log("Playing audio: " + clipToPlay.name);
-        // if this clip is an ending, trigger ending UI instead of normal loop
+        //if this clip is an ending, trigger ending UI instead of normal loop
         if (clipToPlay != null && clipToPlay.IsEnding())
         {
+            audioSource.clip = clipToPlay.GetAudioClip();
+            audioSource.volume = GlobalDialogueVolume; // keep volume consistent
+            audioSource.Play();
+
+            dialogueHasStarted.Invoke(clipToPlay);
             endingReached.Invoke(clipToPlay);
             return;
         }
 
         dialogueHasStarted.Invoke(clipToPlay);
         StartCoroutine(PlayDialogueCoroutine(clipToPlay));
+  
     }
 
     private IEnumerator PlayDialogueCoroutine(AudioClipSO clip)
