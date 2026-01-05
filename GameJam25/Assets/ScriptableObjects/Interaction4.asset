@@ -81,7 +81,7 @@ MonoBehaviour:
     responseSize: 1
     nextClipToPlay: {fileID: 11400000, guid: d47d5ee94fc1b2a48804eba92751c5d6, type: 2}
   - response: Please, if you would let me speak
-    numToSpawn: 3
+    numToSpawn: 1
     choiceType: 2
     spawnTime: 20
     responseSize: 1.8
