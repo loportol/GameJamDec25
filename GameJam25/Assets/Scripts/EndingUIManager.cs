@@ -12,12 +12,24 @@ public class EndingUIManager : MonoBehaviour
     [Header("Main Menu Scene")]
     [SerializeField] private string mainMenuSceneName = "MainMenu";
 
+    // ending Thoughts Hook
+    [Header("Ending Thoughts")]
+    [Tooltip("if assigned, will spawn ending thoughts using the same dialogue/thought button system.")]
+    [SerializeField] private DialogueQTEManager qteManager;
+
+    [Tooltip("Focused ending")]
+    [SerializeField] private string focusedEndingThoughtText = "I love you.";
+
     private void Start()
     {
         // make sure all endings are hidden at start
         timidPanel.SetActive(false);
         focusedPanel.SetActive(false);
         combativePanel.SetActive(false);
+
+        // auto find if you forgot to drag it in
+        if (qteManager == null)
+            qteManager = Object.FindFirstObjectByType<DialogueQTEManager>();
 
         // listen for ending signal from AudioClipManager
         AudioClipManager.Instance.endingReached.AddListener(OnEndingReached);
@@ -27,13 +39,28 @@ public class EndingUIManager : MonoBehaviour
     {
         if (endingClip == null) return;
 
-        // hide all, then show the one we want
+        // hide all -> then show the one we want
         timidPanel.SetActive(false);
         focusedPanel.SetActive(false);
         combativePanel.SetActive(false);
 
         // pause the game 
         Time.timeScale = 0f;
+
+        // spawn ending thoughts
+        if (qteManager != null)
+        {
+            ChoiceType endingType = endingClip.GetEndingType();
+
+            if (endingType == ChoiceType.Focused)
+            {
+                qteManager.PlayEndingThoughts(endingType, focusedEndingThoughtText);
+            }
+            else
+            {
+                qteManager.PlayEndingThoughts(endingType);
+            }
+        }
 
         // show correct ending panel
         switch (endingClip.GetEndingType())

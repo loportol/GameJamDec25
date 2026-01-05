@@ -15,7 +15,7 @@ MonoBehaviour:
   audioClip: {fileID: 8300000, guid: fbbe91c2f2a19d24c8b1f52990f863ff, type: 3}
   responses:
   - response: I'm sorry
-    numToSpawn: 50
+    numToSpawn: 25
     choiceType: 2
     spawnTime: 1
     responseSize: 1
