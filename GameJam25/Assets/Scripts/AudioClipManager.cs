@@ -81,7 +81,7 @@ public class AudioClipManager : MonoBehaviour
     public void PlayDialogue()
     {
         if (audioSource.isPlaying) return;
-
+        Debug.Log("Playing audio: " + clipToPlay.name);
         // if this clip is an ending, trigger ending UI instead of normal loop
         if (clipToPlay != null && clipToPlay.IsEnding())
         {
@@ -91,8 +91,6 @@ public class AudioClipManager : MonoBehaviour
 
         dialogueHasStarted.Invoke(clipToPlay);
         StartCoroutine(PlayDialogueCoroutine(clipToPlay));
-        Debug.Log("Playing audio");
-        // spawn buttons once dialogue starts
     }
 
     private IEnumerator PlayDialogueCoroutine(AudioClipSO clip)
