@@ -49,7 +49,7 @@ MonoBehaviour:
     choiceType: 0
     spawnTime: 5
     responseSize: 1.8
-    nextClipToPlay: {fileID: 0}
+    nextClipToPlay: {fileID: 11400000, guid: fb511445ab0e68043a7c83321a9bf789, type: 2}
   - response: "I know, I\u2019m sorry."
     numToSpawn: 6
     choiceType: 1

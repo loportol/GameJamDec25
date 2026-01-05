@@ -69,10 +69,10 @@ MonoBehaviour:
     responseSize: 1.5
     nextClipToPlay: {fileID: 11400000, guid: 936afb4de2e2fd5408ac218cc7edc94e, type: 2}
   - response: Please, if you would let me speak
-    numToSpawn: 3
+    numToSpawn: 1
     choiceType: 1
     spawnTime: 0
-    responseSize: 1.8
+    responseSize: 1.2
     nextClipToPlay: {fileID: 11400000, guid: d47d5ee94fc1b2a48804eba92751c5d6, type: 2}
   - response: Please, if you would let me speak
     numToSpawn: 3
@@ -83,7 +83,7 @@ MonoBehaviour:
   - response: Please, if you would let me speak
     numToSpawn: 3
     choiceType: 1
-    spawnTime: 0
+    spawnTime: 20
     responseSize: 1.8
     nextClipToPlay: {fileID: 11400000, guid: d47d5ee94fc1b2a48804eba92751c5d6, type: 2}
   clipLength: 27

@@ -17,35 +17,35 @@ MonoBehaviour:
   - response: She left.
     numToSpawn: 2
     choiceType: 0
-    spawnTime: 0
+    spawnTime: 15
     responseSize: 1
     nextClipToPlay: {fileID: 0}
   - response: She's gone.
     numToSpawn: 3
     choiceType: 0
-    spawnTime: 0
+    spawnTime: 14
     responseSize: 1
     nextClipToPlay: {fileID: 0}
   - response: "I can\u2019t believe she left"
     numToSpawn: 2
     choiceType: 0
-    spawnTime: 0
+    spawnTime: 15
     responseSize: 1
     nextClipToPlay: {fileID: 0}
-  - response: How could she talk to me like that?
+  - response: How could you talk to me like that?
     numToSpawn: 1
     choiceType: 0
-    spawnTime: 0
+    spawnTime: 5
     responseSize: 1
     nextClipToPlay: {fileID: 0}
   - response: "She wouldn\u2019t let me speak."
     numToSpawn: 1
     choiceType: 0
-    spawnTime: 0
+    spawnTime: 15
     responseSize: 1
     nextClipToPlay: {fileID: 0}
   - response: Oh my god
-    numToSpawn: 1
+    numToSpawn: 5
     choiceType: 0
     spawnTime: 0
     responseSize: 1
@@ -53,7 +53,7 @@ MonoBehaviour:
   - response: Why would she leave?
     numToSpawn: 1
     choiceType: 0
-    spawnTime: 0
+    spawnTime: 15
     responseSize: 1
     nextClipToPlay: {fileID: 0}
   - response: Mom?
@@ -63,10 +63,16 @@ MonoBehaviour:
     responseSize: 0
     nextClipToPlay: {fileID: 0}
   - response: "I didn\u2019t tell her"
-    numToSpawn: 1
+    numToSpawn: 3
     choiceType: 0
-    spawnTime: 0
+    spawnTime: 10
     responseSize: 1
+    nextClipToPlay: {fileID: 0}
+  - response: Leave me alone!
+    numToSpawn: 5
+    choiceType: 0
+    spawnTime: 5
+    responseSize: 1.5
     nextClipToPlay: {fileID: 0}
   clipLength: 15
   nextClipIfChoiceSkipped: {fileID: 0}
