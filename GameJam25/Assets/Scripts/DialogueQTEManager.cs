@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using TMPro;
-using System.Runtime.InteropServices.WindowsRuntime;
+
+// NOTE: This import is unnecessary in Unity and can cause platform issues.
+// using System.Runtime.InteropServices.WindowsRuntime;
 
 public class DialogueQTEManager : MonoBehaviour
 {
@@ -82,6 +84,10 @@ public class DialogueQTEManager : MonoBehaviour
     private bool timerIsActive = false;
     private bool inResponseWindow = false; // only true AFTER audio ends
 
+    // NEW: if dialogue ends while paused or "IsDialogueActive" is still true, we remember we owe the player a response window
+    private bool responseWindowPending = false;
+    private Coroutine responseWindowRoutine;
+
     private MomPortraitRoutes portraitManager;
 
     private void Start()
@@ -118,6 +124,12 @@ public class DialogueQTEManager : MonoBehaviour
             }
             else
             {
+                // if we owe a response window (dialogue ended while paused), try to enter it now
+                if (responseWindowPending)
+                {
+                    TryEnterResponseWindowNow();
+                }
+
                 // only show timer again if we are currently in the response window
                 if (timerIsActive)
                 {
@@ -131,6 +143,14 @@ public class DialogueQTEManager : MonoBehaviour
     {
         responded = false;
         inResponseWindow = false; // audio is playing, no clicking
+        responseWindowPending = false;
+
+        if (responseWindowRoutine != null)
+        {
+            StopCoroutine(responseWindowRoutine);
+            responseWindowRoutine = null;
+        }
+
         ClearButtons();
         timerSlider.gameObject.SetActive(false);
 
@@ -140,14 +160,44 @@ public class DialogueQTEManager : MonoBehaviour
 
     private void OnDialogueEnded()
     {
-        // if paused, don't start timer/click phase yet
+        // Mark that we *should* enter response window as soon as it is safe.
+        responseWindowPending = true;
+
+        // If paused, we can't enter yet — we'll enter on unpause in SetPaused(false)
         if (isPaused) return;
 
-        inResponseWindow = true; // now clicking is allowed
+        // If dialogue system still thinks audio is active, wait a moment and retry (prevents "return forever" bug)
+        if (responseWindowRoutine != null) StopCoroutine(responseWindowRoutine);
+        responseWindowRoutine = StartCoroutine(WaitForDialogueToReallyEndThenEnter());
+    }
 
-        // only enter response window if audio is REALLY done
+    private IEnumerator WaitForDialogueToReallyEndThenEnter()
+    {
+        // Wait until the AudioClipManager reports dialogue is no longer active (or until we get unpaused)
+        while (AudioClipManager.Instance != null && AudioClipManager.Instance.IsDialogueActive())
+        {
+            if (isPaused) yield break;
+            yield return null;
+        }
+
+        TryEnterResponseWindowNow();
+    }
+
+    private void TryEnterResponseWindowNow()
+    {
+        // If we already entered or we don't owe it anymore, do nothing
+        if (!responseWindowPending) return;
+
+        // If paused, can't enter yet
+        if (isPaused) return;
+
+        // If audio is still active, don't enter yet
         if (AudioClipManager.Instance != null && AudioClipManager.Instance.IsDialogueActive())
             return;
+
+        responseWindowPending = false;
+
+        inResponseWindow = true; // now clicking is allowed
 
         SetButtonsInteractable(true);
         timerIsActive = true;
@@ -373,11 +423,9 @@ public class DialogueQTEManager : MonoBehaviour
         // Let TMP/layout compute sizes
         yield return null;
 
-        // force rebuild now that TMP has had a frame
         Canvas.ForceUpdateCanvases();
         LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
 
-        // lock size so it can't expand after placement
         LayoutElement le = buttonObj.GetComponent<LayoutElement>();
         if (le == null) le = buttonObj.AddComponent<LayoutElement>();
         le.preferredWidth = rect.rect.width;
@@ -389,7 +437,6 @@ public class DialogueQTEManager : MonoBehaviour
         HorizontalLayoutGroup hlg = buttonObj.GetComponent<HorizontalLayoutGroup>();
         if (hlg != null) hlg.enabled = false;
 
-        // rebuild again after locking
         Canvas.ForceUpdateCanvases();
         LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
 
@@ -398,7 +445,6 @@ public class DialogueQTEManager : MonoBehaviour
 
         if (!found)
         {
-            // If crowded: sometimes shrink to fit, otherwise allow overflow outside area
             bool shouldShrink = shrinkToFitIfNeeded && (Random.value < chanceToShrinkInsteadOfOverflow);
 
             if (shouldShrink)
@@ -411,12 +457,10 @@ public class DialogueQTEManager : MonoBehaviour
                     currentScale *= shrinkStep;
                     buttonObj.transform.localScale = new Vector3(currentScale, currentScale, 1f);
 
-                    // let layout update for the new scale
                     yield return null;
                     Canvas.ForceUpdateCanvases();
                     LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
 
-                    // update locked size
                     LayoutElement le2 = buttonObj.GetComponent<LayoutElement>();
                     if (le2 != null)
                     {
@@ -450,37 +494,31 @@ public class DialogueQTEManager : MonoBehaviour
             rect.anchoredPosition = pos;
         }
 
-        // reveal AFTER final size + final position
         StartCoroutine(AnimateThoughtIn(cg, buttonObj.transform, buttonObj.transform.localScale));
 
+        // Starts disabled during audio, enabled once we enter response window
         button.SetInteractable(false);
         activeButtons.Add(button);
     }
 
-    // Fills the whole spawn rect with an even sunflower spiral.
-    // If strict placement fails, it chooses the "best" spot (max distance from others)
-    // so it expands outward and doesn't stack on the last one.
     private bool TryGetSpiralSpawnPosition(RectTransform buttonRect, out Vector2 foundPos)
     {
         float halfW = buttonRect.rect.width * 0.5f;
         float halfH = buttonRect.rect.height * 0.5f;
 
-        // Allowed center positions (keeps the whole button inside)
-        float minX = spawnAreaRect.rect.xMin /* + halfW */;   // allow overflow if needed
-        float maxX = spawnAreaRect.rect.xMax /* - halfW */;
-        float minY = spawnAreaRect.rect.yMin /* + halfH */;
-        float maxY = spawnAreaRect.rect.yMax /* - halfH */;
+        float minX = spawnAreaRect.rect.xMin;
+        float maxX = spawnAreaRect.rect.xMax;
+        float minY = spawnAreaRect.rect.yMin;
+        float maxY = spawnAreaRect.rect.yMax;
 
         Vector2 center = spawnAreaRect.rect.center;
 
-        // Use full rectangle extents (ellipse fill)
         float radiusX = (maxX - minX) * 0.5f;
         float radiusY = (maxY - minY) * 0.5f;
 
         const float goldenAngle = 2.39996323f;
         float jitterPx = 4f;
 
-        // -------- PASS 1: strict no-overlap INSIDE the rect (button must fit) --------
         float fitMinX = spawnAreaRect.rect.xMin + halfW;
         float fitMaxX = spawnAreaRect.rect.xMax - halfW;
         float fitMinY = spawnAreaRect.rect.yMin + halfH;
@@ -516,15 +554,11 @@ public class DialogueQTEManager : MonoBehaviour
             }
         }
 
-        // -------- PASS 2: best-effort spread (never stack on last) --------
-        // This pass allows positions that may overlap others, but picks the one
-        // that is farthest from existing buttons. Still respects noSpawnZones.
         Vector2 bestCandidate = center;
         float bestScore = -1f;
 
         int extraSamples = Mathf.Max(300, maxSpawnTries * 3);
 
-        // If overflow is allowed, search a bigger ellipse beyond the rect
         float searchRadiusX = radiusX * (allowOverflowOutsideSpawnArea ? overflowRadiusMultiplier : 1f);
         float searchRadiusY = radiusY * (allowOverflowOutsideSpawnArea ? overflowRadiusMultiplier : 1f);
 
@@ -537,7 +571,6 @@ public class DialogueQTEManager : MonoBehaviour
             float x = center.x + Mathf.Cos(angle) * r * searchRadiusX + Random.Range(-jitterPx, jitterPx);
             float y = center.y + Mathf.Sin(angle) * r * searchRadiusY + Random.Range(-jitterPx, jitterPx);
 
-            // Do NOT clamp here. Let it go outside if overflow is enabled.
             if (!allowOverflowOutsideSpawnArea)
             {
                 x = Mathf.Clamp(x, fitMinX, fitMaxX);
@@ -546,13 +579,9 @@ public class DialogueQTEManager : MonoBehaviour
 
             Vector2 candidate = new Vector2(x, y);
 
-            // still respect no-spawn zones (even during overflow)
             if (CandidateHitsNoSpawnZones(buttonRect, candidate)) continue;
 
-            // score = distance to nearest existing button (bigger is better)
             float score = MinDistanceToOtherButtons(candidate);
-
-            // tiny bonus for being farther from center (helps it expand outward over time)
             score += Vector2.Distance(candidate, center) * 0.05f;
 
             if (score > bestScore)
@@ -598,13 +627,11 @@ public class DialogueQTEManager : MonoBehaviour
 
     private Rect GetRectInSpawnAreaSpace(RectTransform rt, float padding)
     {
-        // This includes ALL children (TMP text, images, etc.) in spawnAreaRect local space.
         Bounds bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(spawnAreaRect, rt);
 
         Vector2 size = bounds.size;
         Vector2 center = bounds.center;
 
-        // Apply padding as extra "personal space"
         size += new Vector2(padding * 2f, padding * 2f);
 
         return new Rect(center - size * 0.5f, size);
@@ -644,6 +671,8 @@ public class DialogueQTEManager : MonoBehaviour
     {
         responded = true;
         timerIsActive = false;
+        inResponseWindow = false;
+        responseWindowPending = false;
 
         if (timerRoutine != null) StopCoroutine(timerRoutine);
         timerSlider.gameObject.SetActive(false);
@@ -671,6 +700,7 @@ public class DialogueQTEManager : MonoBehaviour
         responded = false;
         timerIsActive = false;
         inResponseWindow = false;
+        responseWindowPending = false;
 
         if (timerSlider != null)
             timerSlider.gameObject.SetActive(false);
@@ -720,7 +750,7 @@ public class DialogueQTEManager : MonoBehaviour
         {
             string t = "";
 
-            if(endingType == ChoiceType.Combative)
+            if (endingType == ChoiceType.Combative)
             {
                 t = pool1[Random.Range(0, pool1.Length)];
             }
@@ -738,7 +768,6 @@ public class DialogueQTEManager : MonoBehaviour
     {
         GameObject buttonObj = Instantiate(thoughtButtonPrefab, spawnAreaRect);
 
-        // base scale + some variety
         buttonObj.transform.localScale *= scale;
         if (varyThoughtSizes)
         {
@@ -746,24 +775,20 @@ public class DialogueQTEManager : MonoBehaviour
             buttonObj.transform.localScale *= mult;
         }
 
-        // hide while sizing/placing (prevents clunky resize showing)
         CanvasGroup cg = buttonObj.GetComponent<CanvasGroup>();
         if (cg == null) cg = buttonObj.AddComponent<CanvasGroup>();
         cg.alpha = 0f;
 
         RectTransform rect = buttonObj.GetComponent<RectTransform>();
 
-        // set TMP text directly (no ClipResponse required)
         TMP_Text tmp = buttonObj.GetComponentInChildren<TMP_Text>(true);
         if (tmp != null) tmp.text = buttonText;
 
-        // wait a frame so TMP + layout calculates proper size
         yield return null;
 
         Canvas.ForceUpdateCanvases();
         LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
 
-        // lock size so it can't expand later
         LayoutElement le = buttonObj.GetComponent<LayoutElement>();
         if (le == null) le = buttonObj.AddComponent<LayoutElement>();
         le.preferredWidth = rect.rect.width;
@@ -781,61 +806,10 @@ public class DialogueQTEManager : MonoBehaviour
         Vector2 pos;
         bool found = TryGetSpiralSpawnPosition(rect, out pos);
 
-        if (!found)
-        {
-            bool shouldShrink = shrinkToFitIfNeeded && (Random.value < chanceToShrinkInsteadOfOverflow);
+        rect.anchoredPosition = pos;
 
-            if (shouldShrink)
-            {
-                float currentScale = buttonObj.transform.localScale.x;
-                bool placed = false;
-
-                while (currentScale > minButtonScale)
-                {
-                    currentScale *= shrinkStep;
-                    buttonObj.transform.localScale = new Vector3(currentScale, currentScale, 1f);
-
-                    yield return null;
-                    Canvas.ForceUpdateCanvases();
-                    LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
-
-                    LayoutElement le2 = buttonObj.GetComponent<LayoutElement>();
-                    if (le2 != null)
-                    {
-                        le2.preferredWidth = rect.rect.width;
-                        le2.preferredHeight = rect.rect.height;
-                    }
-
-                    Canvas.ForceUpdateCanvases();
-                    LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
-
-                    if (TryGetSpiralSpawnPosition(rect, out pos))
-                    {
-                        rect.anchoredPosition = pos;
-                        placed = true;
-                        break;
-                    }
-                }
-
-                if (!placed)
-                {
-                    rect.anchoredPosition = pos; // best-effort spot
-                }
-            }
-            else
-            {
-                rect.anchoredPosition = pos; // best-effort spot
-            }
-        }
-        else
-        {
-            rect.anchoredPosition = pos;
-        }
-
-        // reveal AFTER final size + final position
         StartCoroutine(AnimateThoughtIn(cg, buttonObj.transform, buttonObj.transform.localScale));
 
-        // make sure it cannot be clicked
         ThoughtButtonUI tb = buttonObj.GetComponent<ThoughtButtonUI>();
         if (tb != null) tb.SetInteractable(false);
 
