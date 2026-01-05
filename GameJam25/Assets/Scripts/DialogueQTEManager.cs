@@ -35,6 +35,16 @@ public class DialogueQTEManager : MonoBehaviour
     [Tooltip("Extra small delay between spawns so it feels like \"thoughts\" and not a machine gun.")]
     [SerializeField] private float extraDelayBetweenThoughts = 0.08f;
 
+    [Header("Spawn Placement (no overlap + center bias)")]
+    [Tooltip("How close to center thoughts prefer to spawn. Higher = tighter cluster.")]
+    [SerializeField] private float centerBias = 2.2f;
+
+    [Tooltip("Extra padding so buttons don't feel like they're touching.")]
+    [SerializeField] private float overlapPadding = 10f;
+
+    [Tooltip("How many tries before we give up and place it anyway.")]
+    [SerializeField] private int maxSpawnTries = 120;
+
     // store active buttons so we can enable/disable them and clear them
     private readonly List<ThoughtButtonUI> activeButtons = new List<ThoughtButtonUI>();
 
@@ -45,7 +55,6 @@ public class DialogueQTEManager : MonoBehaviour
     private bool isPaused = false;
     private bool timerIsActive = false;
     private bool inResponseWindow = false; // only true AFTER audio ends
-
 
     private MomPortraitRoutes portraitManager;
 
@@ -105,23 +114,22 @@ public class DialogueQTEManager : MonoBehaviour
 
     private void OnDialogueEnded()
     {
-    // if paused, don't start timer/click phase yet
-    if (isPaused) return;
+        // if paused, don't start timer/click phase yet
+        if (isPaused) return;
 
-    inResponseWindow = true; // now clicking is allowed
+        inResponseWindow = true; // now clicking is allowed
 
-    // safety: only enter response window if audio is REALLY done
-    if (AudioClipManager.Instance != null && AudioClipManager.Instance.IsDialogueActive())
-        return;
+        // safety: only enter response window if audio is REALLY done
+        if (AudioClipManager.Instance != null && AudioClipManager.Instance.IsDialogueActive())
+            return;
 
-    SetButtonsInteractable(true);
-    timerIsActive = true;
+        SetButtonsInteractable(true);
+        timerIsActive = true;
 
-    timerSlider.gameObject.SetActive(true);
+        timerSlider.gameObject.SetActive(true);
 
-    if (timerRoutine != null) StopCoroutine(timerRoutine);
-    timerRoutine = StartCoroutine(ResponseTimer());
-    
+        if (timerRoutine != null) StopCoroutine(timerRoutine);
+        timerRoutine = StartCoroutine(ResponseTimer());
     }
 
     private IEnumerator SpawnDuringAudio(AudioClipSO clip)
@@ -179,8 +187,6 @@ public class DialogueQTEManager : MonoBehaviour
     {
         if (!useAudioTime)
         {
-            // fallback: just wait real time 
-            // pause safe waiting
             float waited = 0f;
             while (waited < targetSeconds)
             {
@@ -195,7 +201,6 @@ public class DialogueQTEManager : MonoBehaviour
 
         while (AudioClipManager.Instance.IsDialogueActive() && AudioClipManager.Instance.GetPlaybackTime() < targetSeconds)
         {
-            // stop progressing while paused
             if (isPaused)
             {
                 yield return null;
@@ -217,12 +222,11 @@ public class DialogueQTEManager : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            // if paused -> don’t spawn during pause
             while (isPaused) yield return null;
 
-            SpawnOneThoughtButton(clipResponse);
+            // IMPORTANT: spawn as coroutine so we can wait a frame and lock size before placing
+            yield return StartCoroutine(SpawnOneThoughtButtonCoroutine(clipResponse));
 
-            // tiny delay makes it feel more organic
             float wait = interval + extraDelayBetweenThoughts;
 
             if (useAudioTime)
@@ -230,10 +234,9 @@ public class DialogueQTEManager : MonoBehaviour
                 float start = AudioClipManager.Instance.GetPlaybackTime();
                 while (AudioClipManager.Instance.IsDialogueActive() && (AudioClipManager.Instance.GetPlaybackTime() - start) < wait)
                 {
-                    // freeze this wait while paused
                     if (isPaused)
                     {
-                        start = AudioClipManager.Instance.GetPlaybackTime(); // reset so we don't "skip" time after pause
+                        start = AudioClipManager.Instance.GetPlaybackTime();
                         yield return null;
                         continue;
                     }
@@ -256,34 +259,89 @@ public class DialogueQTEManager : MonoBehaviour
         }
     }
 
-    private void SpawnOneThoughtButton(ClipResponse clipResponse)
+    private IEnumerator SpawnOneThoughtButtonCoroutine(ClipResponse clipResponse)
     {
         GameObject buttonObj = Instantiate(thoughtButtonPrefab, spawnAreaRect);
-
         buttonObj.transform.localScale *= clipResponse.responseSize;
 
         RectTransform rect = buttonObj.GetComponent<RectTransform>();
-        rect.anchoredPosition = GetRandomSpawnPosition(rect);
-
         ThoughtButtonUI button = buttonObj.GetComponent<ThoughtButtonUI>();
+
+        // set content FIRST (this usually changes TMP size)
         button.Setup(clipResponse, OnResponseSelected);
 
-        button.SetInteractable(false);
+        // Let TMP/layout compute sizes (THIS is the missing piece that causes "overlap later")
+        yield return null;
 
+        // force rebuild now that TMP has had a frame
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+
+        // lock size so it can't expand after placement
+        LayoutElement le = buttonObj.GetComponent<LayoutElement>();
+        if (le == null) le = buttonObj.AddComponent<LayoutElement>();
+        le.preferredWidth = rect.rect.width;
+        le.preferredHeight = rect.rect.height;
+
+        ContentSizeFitter csf = buttonObj.GetComponent<ContentSizeFitter>();
+        if (csf != null) csf.enabled = false;
+
+        HorizontalLayoutGroup hlg = buttonObj.GetComponent<HorizontalLayoutGroup>();
+        if (hlg != null) hlg.enabled = false;
+
+        // rebuild again after locking
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+
+        // now place it using its FINAL size
+        rect.anchoredPosition = GetSpiralSpawnPosition(rect);
+
+        button.SetInteractable(false);
         activeButtons.Add(button);
     }
 
-    private Vector2 GetRandomSpawnPosition(RectTransform buttonRect)
+    // Expands outward from the center (spiral) until it finds a non-overlapping spot.
+    private Vector2 GetSpiralSpawnPosition(RectTransform buttonRect)
     {
-        // do rejection sampling: try up to N times to find a position
-        // that doesn't overlap no-spawn zones or other buttons
-        const int MAX_TRIES = 40;
+        // bounds inside area (account for button size so it doesn't clip)
+        float halfW = buttonRect.rect.width * 0.5f;
+        float halfH = buttonRect.rect.height * 0.5f;
 
-        for (int attempt = 0; attempt < MAX_TRIES; attempt++)
+        float minX = spawnAreaRect.rect.xMin + halfW;
+        float maxX = spawnAreaRect.rect.xMax - halfW;
+        float minY = spawnAreaRect.rect.yMin + halfH;
+        float maxY = spawnAreaRect.rect.yMax - halfH;
+
+        Vector2 center = spawnAreaRect.rect.center;
+
+        float maxRadiusX = Mathf.Min(center.x - minX, maxX - center.x);
+        float maxRadiusY = Mathf.Min(center.y - minY, maxY - center.y);
+        float maxRadius = Mathf.Max(5f, Mathf.Min(maxRadiusX, maxRadiusY));
+
+        // golden angle spiral
+        const float goldenAngle = 2.39996323f;
+
+        for (int attempt = 0; attempt < maxSpawnTries; attempt++)
         {
-            Vector2 candidate = RandomPointInside(spawnAreaRect, buttonRect);
+            // progress expands outward; centerBias makes earlier attempts tighter near center
+            float p = (maxSpawnTries <= 1) ? 1f : (float)attempt / (maxSpawnTries - 1);
+            float radius = Mathf.Lerp(0f, maxRadius, Mathf.Pow(p, 1f / Mathf.Max(0.01f, centerBias)));
 
-            // temp set so we can measure overlap using its rect
+            float angle = attempt * goldenAngle;
+
+            // slight jitter so it doesn't look too patterned
+            float jitter = 0.15f;
+            float jx = Random.Range(-jitter, jitter);
+            float jy = Random.Range(-jitter, jitter);
+
+            float x = center.x + Mathf.Cos(angle) * radius + jx * radius;
+            float y = center.y + Mathf.Sin(angle) * radius + jy * radius;
+
+            x = Mathf.Clamp(x, minX, maxX);
+            y = Mathf.Clamp(y, minY, maxY);
+
+            Vector2 candidate = new Vector2(x, y);
+
             buttonRect.anchoredPosition = candidate;
 
             if (OverlapsNoSpawnZones(buttonRect)) continue;
@@ -292,24 +350,10 @@ public class DialogueQTEManager : MonoBehaviour
             return candidate;
         }
 
-        return RandomPointInside(spawnAreaRect, buttonRect);
-    }
-
-    private Vector2 RandomPointInside(RectTransform area, RectTransform element)
-    {
-        // Keep inside spawn area with padding based on element size
-        float halfW = element.rect.width * 0.5f;
-        float halfH = element.rect.height * 0.5f;
-
-        float minX = area.rect.xMin + halfW;
-        float maxX = area.rect.xMax - halfW;
-        float minY = area.rect.yMin + halfH;
-        float maxY = area.rect.yMax - halfH;
-
-        float x = Random.Range(minX, maxX);
-        float y = Random.Range(minY, maxY);
-
-        return new Vector2(x, y);
+        // last resort: anywhere inside (still clamped)
+        float rx = Random.Range(minX, maxX);
+        float ry = Random.Range(minY, maxY);
+        return new Vector2(rx, ry);
     }
 
     private bool OverlapsNoSpawnZones(RectTransform buttonRect)
@@ -328,6 +372,7 @@ public class DialogueQTEManager : MonoBehaviour
         {
             if (other == null) continue;
             RectTransform otherRect = other.GetComponent<RectTransform>();
+            if (otherRect == null) continue;
             if (otherRect == buttonRect) continue;
             if (RectsOverlap(buttonRect, otherRect)) return true;
         }
@@ -336,16 +381,23 @@ public class DialogueQTEManager : MonoBehaviour
 
     private bool RectsOverlap(RectTransform a, RectTransform b)
     {
-        Rect ra = GetRectInParentSpace(a);
-        Rect rb = GetRectInParentSpace(b);
+        Rect ra = GetWorldRect(a, overlapPadding);
+        Rect rb = GetWorldRect(b, overlapPadding);
         return ra.Overlaps(rb);
     }
 
-    private Rect GetRectInParentSpace(RectTransform rt)
+    private Rect GetWorldRect(RectTransform rt, float padding)
     {
-        Vector2 size = rt.rect.size;
-        Vector2 pos = rt.anchoredPosition;
-        return new Rect(pos - size * 0.5f, size);
+        Vector3[] corners = new Vector3[4];
+        rt.GetWorldCorners(corners);
+
+        Vector2 min = corners[0];
+        Vector2 max = corners[2];
+
+        min -= new Vector2(padding, padding);
+        max += new Vector2(padding, padding);
+
+        return new Rect(min, max - min);
     }
 
     private IEnumerator ResponseTimer()
@@ -355,7 +407,6 @@ public class DialogueQTEManager : MonoBehaviour
 
         while (timeRemaining > 0f && !responded)
         {
-            // freeze timer while paused
             if (isPaused)
             {
                 yield return null;
@@ -375,7 +426,7 @@ public class DialogueQTEManager : MonoBehaviour
         {
             ClearButtons();
             AudioClipManager.Instance.PlayDialogue();
-            portraitManager.SetRouteSprite(ChoiceType.Timid);
+            if (portraitManager != null) portraitManager.SetRouteSprite(ChoiceType.Timid);
         }
     }
 
@@ -384,15 +435,13 @@ public class DialogueQTEManager : MonoBehaviour
         responded = true;
         timerIsActive = false;
 
-        // stop timer if running
         if (timerRoutine != null) StopCoroutine(timerRoutine);
         timerSlider.gameObject.SetActive(false);
 
         ClearButtons();
 
-        // tell audio manager what consequence to play next
         AudioClipManager.Instance.ChooseResponse(chosen);
-        portraitManager.SetRouteSprite(chosen.choiceType);
+        if (portraitManager != null) portraitManager.SetRouteSprite(chosen.choiceType);
     }
 
     private void SetButtonsInteractable(bool canClick)
