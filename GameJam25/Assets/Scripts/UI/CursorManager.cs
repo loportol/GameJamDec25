@@ -9,7 +9,7 @@ public class CursorManager : MonoBehaviour
 
     private void Awake()
     {
-        Cursor.SetCursor(cursorDefault, Vector2.zero, CursorMode.Auto);
+        Cursor.SetCursor(cursorDefault, Vector2.zero, CursorMode.ForceSoftware);
     }
 
     // this is a little scuffed but it works
@@ -17,11 +17,11 @@ public class CursorManager : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
-            Cursor.SetCursor(cursorGrab, Vector2.zero, CursorMode.Auto);
+            Cursor.SetCursor(cursorGrab, Vector2.zero, CursorMode.ForceSoftware);
         }
         else if (Input.GetMouseButtonUp(0))
         {
-            Cursor.SetCursor(cursorDefault, Vector2.zero, CursorMode.Auto);
+            Cursor.SetCursor(cursorDefault, Vector2.zero, CursorMode.ForceSoftware);
         }
     }
 }
