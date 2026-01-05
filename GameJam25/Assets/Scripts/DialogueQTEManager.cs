@@ -684,7 +684,7 @@ public class DialogueQTEManager : MonoBehaviour
         }
         else
         {
-            StartCoroutine(SpawnOverwhelmingEndingThoughts());
+            StartCoroutine(SpawnOverwhelmingEndingThoughts(endingType));
         }
     }
 
@@ -694,7 +694,7 @@ public class DialogueQTEManager : MonoBehaviour
         yield return StartCoroutine(SpawnEndingThoughtButton(text, 1.0f));
     }
 
-    private IEnumerator SpawnOverwhelmingEndingThoughts()
+    private IEnumerator SpawnOverwhelmingEndingThoughts(ChoiceType endingType)
     {
         yield return new WaitForSeconds(5);
 
@@ -702,16 +702,33 @@ public class DialogueQTEManager : MonoBehaviour
         float delay = 1f;
         float scale = 0.9f;
 
-        string[] pool = new string[]
+        string[] pool1 = new string[]
         {
             "too much", "stop", "i can't", "what if i'm wrong",
             "i'm sorry", "she hates me", "i'm stuck",
             "everything is loud", "i can't breathe", "make it stop"
         };
 
+        string[] pool2 = new string[]
+        {
+            "I didn't tell her.", "stop", "I can't", "I can't tell her",
+            "i'm sorry", "She won’t understand", "i'm stuck",
+            "everything is loud", "i can't breathe", "make it stop"
+        };
+
         for (int i = 0; i < count; i++)
         {
-            string t = pool[Random.Range(0, pool.Length)];
+            string t = "";
+
+            if(endingType == ChoiceType.Combative)
+            {
+                t = pool1[Random.Range(0, pool1.Length)];
+            }
+            else
+            {
+                t = pool2[Random.Range(0, pool2.Length)];
+            }
+
             yield return StartCoroutine(SpawnEndingThoughtButton(t, scale));
             yield return new WaitForSeconds(delay);
         }
