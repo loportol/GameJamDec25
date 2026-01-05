@@ -44,8 +44,8 @@ public class EndingUIManager : MonoBehaviour
         focusedPanel.SetActive(false);
         combativePanel.SetActive(false);
 
-        // pause the game 
-        Time.timeScale = 0f;
+        //pause the game
+        //Time.timeScale = 0f;
 
         // spawn ending thoughts
         if (qteManager != null)
