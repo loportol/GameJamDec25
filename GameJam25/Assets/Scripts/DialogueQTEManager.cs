@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using TMPro;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 public class DialogueQTEManager : MonoBehaviour
 {
@@ -689,13 +690,16 @@ public class DialogueQTEManager : MonoBehaviour
 
     private IEnumerator SpawnFocusedEndingThought(string text)
     {
+        yield return new WaitForSeconds(25);
         yield return StartCoroutine(SpawnEndingThoughtButton(text, 1.0f));
     }
 
     private IEnumerator SpawnOverwhelmingEndingThoughts()
     {
-        int count = 22;
-        float delay = 0.04f;
+        yield return new WaitForSeconds(5);
+
+        int count = 30;
+        float delay = 1f;
         float scale = 0.9f;
 
         string[] pool = new string[]
@@ -709,7 +713,7 @@ public class DialogueQTEManager : MonoBehaviour
         {
             string t = pool[Random.Range(0, pool.Length)];
             yield return StartCoroutine(SpawnEndingThoughtButton(t, scale));
-            yield return new WaitForSecondsRealtime(delay);
+            yield return new WaitForSeconds(delay);
         }
     }
 
