@@ -158,6 +158,28 @@ public class PauseMenuController : MonoBehaviour
             UISFXManager.Instance.PlayClick();
         }
 
+        Time.timeScale = 1f;
+
+        EnsureQTEManager();
+        if (qteManager != null)
+        {
+            Debug.Log("BackToGame: calling qteManager.SetPaused(false)");
+            qteManager.SetPaused(false);
+        }
+
+        if (AudioClipManager.Instance != null)
+        {
+            AudioClipManager.Instance.StopDialogue();
+        }
+        if (yarnRunner != null)
+            yarnRunner.enabled = true;
+
+        if (yarnRunner != null)
+            yarnRunner.enabled = true;
+
+        if (presenter != null)
+            presenter.enabled = true;
+
         SceneManager.LoadScene(1);
     }
 }

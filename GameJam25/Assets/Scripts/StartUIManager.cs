@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class StartUIManager : MonoBehaviour
@@ -16,19 +17,22 @@ public class StartUIManager : MonoBehaviour
     [Header("Clips")]
     [SerializeField] private AudioClip doorOpen;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (blackFade != null)
         {
             StartCoroutine(gameOpening());
         }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     private IEnumerator gameOpening()
@@ -43,7 +47,7 @@ public class StartUIManager : MonoBehaviour
         yield return StartCoroutine(DoFade(1f, 0f));
 
         //Disable Game Object
-        blackFade.gameObject.SetActive(false);
+        blackFade.color = new Color(0, 0, 0, 0);
 
         //Start the audio
         StartAudio();
