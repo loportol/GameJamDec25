@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using TMPro;
 
-// NOTE: This import is unnecessary in Unity and can cause platform issues.
+// NOTE: Remove this in Unity unless you truly need it.
+// It can cause weird platform/build issues (and you’re not using it here).
 // using System.Runtime.InteropServices.WindowsRuntime;
 
 public class DialogueQTEManager : MonoBehaviour
@@ -84,7 +85,8 @@ public class DialogueQTEManager : MonoBehaviour
     private bool timerIsActive = false;
     private bool inResponseWindow = false; // only true AFTER audio ends
 
-    // NEW: if dialogue ends while paused or "IsDialogueActive" is still true, we remember we owe the player a response window
+    // BUILD-SAFE: if OnDialogueEnded fires while audio still reports "active" (common in builds),
+    // we keep trying until it becomes safe to enable buttons.
     private bool responseWindowPending = false;
     private Coroutine responseWindowRoutine;
 
@@ -92,13 +94,9 @@ public class DialogueQTEManager : MonoBehaviour
 
     private void Start()
     {
-        // dialogue starts, spawn thoughts (NOT clickable yet)
         AudioClipManager.Instance.dialogueHasStarted.AddListener(OnDialogueStarted);
-
-        //  dialogue ends, enable clicking + start timer
         AudioClipManager.Instance.dialogueHasEnded.AddListener(OnDialogueEnded);
 
-        // timer UI setup
         timerSlider.maxValue = responseTime;
         timerSlider.value = responseTime;
         timerSlider.gameObject.SetActive(false);
@@ -112,10 +110,15 @@ public class DialogueQTEManager : MonoBehaviour
     {
         isPaused = paused;
 
-        // Only allow clicking if we're NOT paused AND we're in the response window
+        // If dialogue already ended while paused, we "owe" the response window.
+        // On unpause, attempt to enter immediately.
+        if (!paused && responseWindowPending)
+        {
+            TryEnterResponseWindowNow();
+        }
+
         SetButtonsInteractable(!paused && inResponseWindow);
 
-        // hide timer UI while paused so it doesn't look like it's draining
         if (timerSlider != null)
         {
             if (paused)
@@ -124,13 +127,6 @@ public class DialogueQTEManager : MonoBehaviour
             }
             else
             {
-                // if we owe a response window (dialogue ended while paused), try to enter it now
-                if (responseWindowPending)
-                {
-                    TryEnterResponseWindowNow();
-                }
-
-                // only show timer again if we are currently in the response window
                 if (timerIsActive)
                 {
                     timerSlider.gameObject.SetActive(true);
@@ -142,7 +138,7 @@ public class DialogueQTEManager : MonoBehaviour
     private void OnDialogueStarted(AudioClipSO clip)
     {
         responded = false;
-        inResponseWindow = false; // audio is playing, no clicking
+        inResponseWindow = false;
         responseWindowPending = false;
 
         if (responseWindowRoutine != null)
@@ -160,20 +156,23 @@ public class DialogueQTEManager : MonoBehaviour
 
     private void OnDialogueEnded()
     {
-        // Mark that we *should* enter response window as soon as it is safe.
+        // We ALWAYS mark pending, because in builds "ended event" can fire
+        // while the audio system still reports active for a few frames.
         responseWindowPending = true;
 
-        // If paused, we can't enter yet — we'll enter on unpause in SetPaused(false)
+        // If paused, we can’t enter now. We'll enter on unpause.
         if (isPaused) return;
 
-        // If dialogue system still thinks audio is active, wait a moment and retry (prevents "return forever" bug)
+        // Start a retry routine that waits until dialogue is truly inactive.
         if (responseWindowRoutine != null) StopCoroutine(responseWindowRoutine);
         responseWindowRoutine = StartCoroutine(WaitForDialogueToReallyEndThenEnter());
     }
 
     private IEnumerator WaitForDialogueToReallyEndThenEnter()
     {
-        // Wait until the AudioClipManager reports dialogue is no longer active (or until we get unpaused)
+        // Small grace frame: helps with build-only event order differences
+        yield return null;
+
         while (AudioClipManager.Instance != null && AudioClipManager.Instance.IsDialogueActive())
         {
             if (isPaused) yield break;
@@ -185,19 +184,15 @@ public class DialogueQTEManager : MonoBehaviour
 
     private void TryEnterResponseWindowNow()
     {
-        // If we already entered or we don't owe it anymore, do nothing
         if (!responseWindowPending) return;
-
-        // If paused, can't enter yet
         if (isPaused) return;
 
-        // If audio is still active, don't enter yet
         if (AudioClipManager.Instance != null && AudioClipManager.Instance.IsDialogueActive())
             return;
 
         responseWindowPending = false;
 
-        inResponseWindow = true; // now clicking is allowed
+        inResponseWindow = true;
 
         SetButtonsInteractable(true);
         timerIsActive = true;
@@ -219,11 +214,9 @@ public class DialogueQTEManager : MonoBehaviour
         List<ClipResponse> responses = clip.GetResponses();
         if (responses == null || responses.Count == 0)
         {
-            // clips may have noResponse=true -> in that case no buttons are expected
             yield break;
         }
 
-        // sort by spawnTime so we can treat them like interaction timestamps
         List<ClipResponse> ordered = new List<ClipResponse>(responses);
         ordered.Sort((a, b) => a.spawnTime.CompareTo(b.spawnTime));
 
@@ -235,7 +228,6 @@ public class DialogueQTEManager : MonoBehaviour
 
         SetButtonsInteractable(false);
 
-        // for each interaction timestamp: wait until that time -> then drip-spawn its buttons
         for (int idx = 0; idx < ordered.Count; idx++)
         {
             while (isPaused) yield return null;
@@ -254,7 +246,6 @@ public class DialogueQTEManager : MonoBehaviour
 
             yield return WaitUntilDialogueTime(startTime);
 
-            // drip spawn across spawnWindow (so it feels like thoughts creeping in)
             yield return SpawnClipResponseButtonsSlow(cr, spawnWindow);
         }
     }
@@ -300,7 +291,6 @@ public class DialogueQTEManager : MonoBehaviour
         {
             while (isPaused) yield return null;
 
-            // spawn as coroutine so we can wait a frame and lock size before placing
             yield return StartCoroutine(SpawnOneThoughtButtonCoroutine(clipResponse));
 
             float wait = interval + extraDelayBetweenThoughts;
@@ -335,7 +325,6 @@ public class DialogueQTEManager : MonoBehaviour
         }
     }
 
-    // Distance-based scoring so fallback still spreads out (avoids stacking on last button)
     private float MinDistanceToOtherButtons(Vector2 candidate)
     {
         float best = float.PositiveInfinity;
@@ -357,7 +346,6 @@ public class DialogueQTEManager : MonoBehaviour
         return best;
     }
 
-    // Checks only noSpawn zones at a given candidate (without needing to permanently move the rect)
     private bool CandidateHitsNoSpawnZones(RectTransform buttonRect, Vector2 candidate)
     {
         Vector2 prev = buttonRect.anchoredPosition;
@@ -369,12 +357,11 @@ public class DialogueQTEManager : MonoBehaviour
         return bad;
     }
 
-    // Smooth "thought appears" animation (prevents visible resize popping)
     private IEnumerator AnimateThoughtIn(CanvasGroup cg, Transform t, Vector3 finalScale, float duration = 0.12f)
     {
         if (cg != null) cg.alpha = 0f;
 
-        Vector3 startScale = finalScale * 0.92f; // tiny pop-in
+        Vector3 startScale = finalScale * 0.92f;
         t.localScale = startScale;
 
         float elapsed = 0f;
@@ -399,17 +386,14 @@ public class DialogueQTEManager : MonoBehaviour
     {
         GameObject buttonObj = Instantiate(thoughtButtonPrefab, spawnAreaRect);
 
-        // base size from response
         buttonObj.transform.localScale *= clipResponse.responseSize;
 
-        // add variety (some bigger/smaller)
         if (varyThoughtSizes)
         {
             float mult = Random.Range(thoughtSizeMultiplierRange.x, thoughtSizeMultiplierRange.y);
             buttonObj.transform.localScale *= mult;
         }
 
-        // hide while sizing/placing (prevents clunky resize showing)
         CanvasGroup cg = buttonObj.GetComponent<CanvasGroup>();
         if (cg == null) cg = buttonObj.AddComponent<CanvasGroup>();
         cg.alpha = 0f;
@@ -417,10 +401,8 @@ public class DialogueQTEManager : MonoBehaviour
         RectTransform rect = buttonObj.GetComponent<RectTransform>();
         ThoughtButtonUI button = buttonObj.GetComponent<ThoughtButtonUI>();
 
-        // set content FIRST
         button.Setup(clipResponse, OnResponseSelected);
 
-        // Let TMP/layout compute sizes
         yield return null;
 
         Canvas.ForceUpdateCanvases();
@@ -441,62 +423,12 @@ public class DialogueQTEManager : MonoBehaviour
         LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
 
         Vector2 pos;
-        bool found = TryGetSpiralSpawnPosition(rect, out pos);
-
-        if (!found)
-        {
-            bool shouldShrink = shrinkToFitIfNeeded && (Random.value < chanceToShrinkInsteadOfOverflow);
-
-            if (shouldShrink)
-            {
-                float currentScale = buttonObj.transform.localScale.x;
-                bool placed = false;
-
-                while (currentScale > minButtonScale)
-                {
-                    currentScale *= shrinkStep;
-                    buttonObj.transform.localScale = new Vector3(currentScale, currentScale, 1f);
-
-                    yield return null;
-                    Canvas.ForceUpdateCanvases();
-                    LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
-
-                    LayoutElement le2 = buttonObj.GetComponent<LayoutElement>();
-                    if (le2 != null)
-                    {
-                        le2.preferredWidth = rect.rect.width;
-                        le2.preferredHeight = rect.rect.height;
-                    }
-
-                    Canvas.ForceUpdateCanvases();
-                    LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
-
-                    if (TryGetSpiralSpawnPosition(rect, out pos))
-                    {
-                        rect.anchoredPosition = pos;
-                        placed = true;
-                        break;
-                    }
-                }
-
-                if (!placed)
-                {
-                    rect.anchoredPosition = pos; // best-effort spot
-                }
-            }
-            else
-            {
-                rect.anchoredPosition = pos; // best-effort spot
-            }
-        }
-        else
-        {
-            rect.anchoredPosition = pos;
-        }
+        TryGetSpiralSpawnPosition(rect, out pos);
+        rect.anchoredPosition = pos;
 
         StartCoroutine(AnimateThoughtIn(cg, buttonObj.transform, buttonObj.transform.localScale));
 
-        // Starts disabled during audio, enabled once we enter response window
+        // IMPORTANT: stay disabled during audio
         button.SetInteractable(false);
         activeButtons.Add(button);
     }
@@ -691,7 +623,7 @@ public class DialogueQTEManager : MonoBehaviour
         }
     }
 
-    // ENDING THOUGHTS SYSTEM 
+    // ENDING THOUGHTS SYSTEM
 
     public void PlayEndingThoughts(ChoiceType endingType, string focusedText = "I can do this.")
     {
@@ -720,13 +652,14 @@ public class DialogueQTEManager : MonoBehaviour
 
     private IEnumerator SpawnFocusedEndingThought(string text)
     {
-        yield return new WaitForSeconds(25);
+        // Using realtime so it isn’t affected by Time.timeScale (build/pause differences)
+        yield return new WaitForSecondsRealtime(25);
         yield return StartCoroutine(SpawnEndingThoughtButton(text, 1.0f));
     }
 
     private IEnumerator SpawnOverwhelmingEndingThoughts(ChoiceType endingType)
     {
-        yield return new WaitForSeconds(5);
+        yield return new WaitForSecondsRealtime(5);
 
         int count = 30;
         float delay = 1f;
@@ -748,19 +681,12 @@ public class DialogueQTEManager : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            string t = "";
-
-            if (endingType == ChoiceType.Combative)
-            {
-                t = pool1[Random.Range(0, pool1.Length)];
-            }
-            else
-            {
-                t = pool2[Random.Range(0, pool2.Length)];
-            }
+            string t = (endingType == ChoiceType.Combative)
+                ? pool1[Random.Range(0, pool1.Length)]
+                : pool2[Random.Range(0, pool2.Length)];
 
             yield return StartCoroutine(SpawnEndingThoughtButton(t, scale));
-            yield return new WaitForSeconds(delay);
+            yield return new WaitForSecondsRealtime(delay);
         }
     }
 
@@ -804,8 +730,7 @@ public class DialogueQTEManager : MonoBehaviour
         LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
 
         Vector2 pos;
-        bool found = TryGetSpiralSpawnPosition(rect, out pos);
-
+        TryGetSpiralSpawnPosition(rect, out pos);
         rect.anchoredPosition = pos;
 
         StartCoroutine(AnimateThoughtIn(cg, buttonObj.transform, buttonObj.transform.localScale));
