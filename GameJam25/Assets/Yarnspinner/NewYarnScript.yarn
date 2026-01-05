@@ -148,7 +148,7 @@ And here you are getting worked up
 after being cold and unresponsive this whole conversation. 
 <<wps UIManagers 16 4>>
 I swear ever since you were a child, everything has to be an event with you. 
-<<wps UIManagers 7 2.5>>
+<<wps UIManagers 7 3>>
 I bet it’s those friends of yours.
 ===
 
@@ -176,27 +176,33 @@ title: Interaction7a
 ---
 <<wps UIManagers 12 4>>
 I wish your father could hear the way you talk to me! 
-<<wps UIManagers 10 2.5>>
+<<wps UIManagers 10 3>>
 I’m sorry, but after all that I’ve done for you, 
-<<wps UIManagers 8 2.5>>
+<<wps UIManagers 8 3>>
 I don’t deserve to be treated like this. 
-<<wps UIManagers 7 3.5>>
+<<wps UIManagers 7 7>>
 Everything I’ve done, I’ve done for you. 
-<<wps UIManagers 11 3.5>>
-But since I’m such a terrible mother, I’ll leave you alone.
+<<wps UIManagers 7 4>>
+But since I’m such a terrible mother, 
+<<wps UIManagers 4 4>>
+I’ll leave you alone.
 ===
 
 title: Interaction7b
 ---
-<<wps UIManagers 15 6>>
-Now where is that waiter? I put in our meals well over 15 minutes ago. 
-<<wps UIManagers 11 4>>
+<<wps UIManagers 5 3>>
+Now where is that waiter? 
+<<wps UIManagers 10 5>>
+I put in our meals well over 15 minutes ago. 
+<<wps UIManagers 11 9>>
 It seems good service is ridiculously hard to find these days. 
-<<wps UIManagers 9 2>>
+<<wps UIManagers 9 5>>
 You would think they could at least come over 
-<<wps UIManagers 6 3>>
-and take your drink order. Honestly!
-<<wps UIManagers 10 3>>
+<<wps UIManagers 5 4>>
+and take your drink order. 
+<<wps UIManagers 1 1>>
+Honestly!
+<<wps UIManagers 10 7>>
 Honey, I love you, but next time we go out, 
 <<wps UIManagers 5 2>>
 I am picking the restaurant.
@@ -206,20 +212,24 @@ title: Interaction7c
 ---
 <<wps UIManagers 3 3>>
 Oh no, Honey. 
-<<wps UIManagers 9 3.5>>
-You don’t have to apologize. And please don’t cry. 
-<<wps UIManagers 10 3.5>>
+<<wps UIManagers 5 3>>
+You don’t have to apologize. 
+<<wps UIManagers 4 2>>
+And please don’t cry. 
+<<wps UIManagers 10 6>>
 I know, I know we put these expectations on you, 
-<<wps UIManagers 12 4>>
+<<wps UIManagers 12 8>>
 we just want the best for you and if school isn’t that, 
-<<wps UIManagers 7 2>>
-we can help you work it out. 
-<<wps UIManagers 9 4>>
-Whatever is going on, I promise we’ll support you. 
 <<wps UIManagers 7 3>>
-Me and your father. It’s just school. 
-<<wps UIManagers 3 2>>
+we can help you work it out. 
+<<wps UIManagers 9 5>>
+Whatever is going on, I promise we’ll support you. 
+<<wps UIManagers 4 2>>
+Me and your father. 
+<<wps UIManagers 3 3>>
+It’s just school. 
+<<wps UIManagers 3 3>>
 Listen, come here. 
-<<wps UIManagers 5 2>>
+<<wps UIManagers 5 3>>
 Thank you for telling me.
 ===
