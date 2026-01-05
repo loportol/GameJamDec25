@@ -79,6 +79,25 @@ public class SceneMusicPlayer : MonoBehaviour
         }
     }
 
+    public void SetMusicVolNonPref(float value)
+    {
+        // apply to this instance immediately
+        if (audioSource != null)
+        {
+            audioSource.volume = value;
+        }
+
+        // also apply to the other instance if it exists
+        if (menuInstance != null && menuInstance.audioSource != null)
+        {
+            menuInstance.audioSource.volume = value;
+        }
+        if (gameInstance != null && gameInstance.audioSource != null)
+        {
+            gameInstance.audioSource.volume = value;
+        }
+    }
+
     public float GetMusicVolume()
     {
         return GlobalMusicVolume;

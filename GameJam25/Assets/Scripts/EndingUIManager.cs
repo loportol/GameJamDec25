@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class EndingUIManager : MonoBehaviour
 {
@@ -16,9 +17,19 @@ public class EndingUIManager : MonoBehaviour
     [Header("Ending Thoughts")]
     [Tooltip("if assigned, will spawn ending thoughts using the same dialogue/thought button system.")]
     [SerializeField] private DialogueQTEManager qteManager;
+    [SerializeField] private SceneMusicPlayer gameInstance;
 
     [Tooltip("Focused ending")]
     [SerializeField] private string focusedEndingThoughtText = "I love you.";
+
+    [SerializeField] private Image blackFade;
+
+    [SerializeField] private float fadeDuration = 5f;
+    [SerializeField] private AnimationCurve smoothCurve = new AnimationCurve(new Keyframe[] { new Keyframe(0f, 0f), new Keyframe(1f, 1f) });
+
+    private readonly WaitForSeconds skipFrame = new WaitForSeconds(0.0001f);
+    private float timerCurrent;
+    private float currentVol;
 
     private void Start()
     {
@@ -47,7 +58,7 @@ public class EndingUIManager : MonoBehaviour
         //pause the game
         //Time.timeScale = 0f;
 
-        // spawn ending thoughts
+        //spawn ending thoughts
         if (qteManager != null)
         {
             ChoiceType endingType = endingClip.GetEndingType();
@@ -84,10 +95,32 @@ public class EndingUIManager : MonoBehaviour
 
     private IEnumerator ReturnToMenuAfter(float seconds)
     {
+        
+        float wait = seconds - fadeDuration;
+
         // since we froze timeScale, use realtime wait
-        yield return new WaitForSecondsRealtime(seconds);
+        yield return new WaitForSeconds(wait);
+        blackFade.gameObject.SetActive(true);
+        yield return StartCoroutine(DoFade(0, 1));
 
         Time.timeScale = 1f;
+        //gameInstance.SetMusicVolume(currentVol);
         SceneManager.LoadScene(mainMenuSceneName);
+    }
+
+    private IEnumerator DoFade(float start, float end)
+    {
+        timerCurrent = 0f;
+        currentVol = gameInstance.GetMusicVolume();
+
+        while (timerCurrent <= fadeDuration)
+        {
+            timerCurrent += Time.deltaTime;
+            Color c = blackFade.color;
+            blackFade.color = new Color(c.r, c.g, c.b, Mathf.Lerp(start, end, smoothCurve.Evaluate(timerCurrent / fadeDuration)));
+
+            gameInstance.SetMusicVolNonPref(Mathf.Lerp(currentVol, 0, smoothCurve.Evaluate(timerCurrent / fadeDuration)));
+            yield return skipFrame;
+        }
     }
 }
