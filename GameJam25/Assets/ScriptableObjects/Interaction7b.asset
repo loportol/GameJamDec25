@@ -17,13 +17,19 @@ MonoBehaviour:
   - response: "I didn\u2019t tell her"
     numToSpawn: 5
     choiceType: 1
+    spawnTime: 2
+    responseSize: 1
+    nextClipToPlay: {fileID: 0}
+  - response: "I can\u2019t tell her."
+    numToSpawn: 1
+    choiceType: 1
     spawnTime: 0
     responseSize: 1
     nextClipToPlay: {fileID: 0}
   - response: "I can\u2019t tell her."
-    numToSpawn: 5
+    numToSpawn: 1
     choiceType: 1
-    spawnTime: 0
+    spawnTime: 5
     responseSize: 1
     nextClipToPlay: {fileID: 0}
   - response: "I can\u2019t do it."
@@ -33,9 +39,15 @@ MonoBehaviour:
     responseSize: 1
     nextClipToPlay: {fileID: 0}
   - response: "She won\u2019t understand."
-    numToSpawn: 5
+    numToSpawn: 3
     choiceType: 1
-    spawnTime: 0
+    spawnTime: 10
+    responseSize: 1
+    nextClipToPlay: {fileID: 0}
+  - response: "She won\u2019t understand."
+    numToSpawn: 2
+    choiceType: 1
+    spawnTime: 15
     responseSize: 1
     nextClipToPlay: {fileID: 0}
   clipLength: 19

@@ -17,10 +17,10 @@ MonoBehaviour:
   - response: I love you, Mom
     numToSpawn: 1
     choiceType: 2
-    spawnTime: 0
+    spawnTime: 25
     responseSize: 1
     nextClipToPlay: {fileID: 0}
-  clipLength: 0
+  clipLength: 27
   nextClipIfChoiceSkipped: {fileID: 0}
   yarnNode: Interaction7c
   isEnding: 1
