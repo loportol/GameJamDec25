@@ -703,12 +703,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 331189093}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1816557836}
+  m_Father: {fileID: 1766117193}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -1631,7 +1631,34 @@ MonoBehaviour:
   combativePanel: {fileID: 1714181495}
   mainMenuSceneName: MainMenu
   qteManager: {fileID: 0}
+  gameInstance: {fileID: 822299233}
   focusedEndingThoughtText: I love you.
+  blackFade: {fileID: 331189095}
+  fadeDuration: 5
+  smoothCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!4 &756714728
 Transform:
   m_ObjectHideFlags: 0
@@ -3891,6 +3918,7 @@ RectTransform:
   - {fileID: 779579857}
   - {fileID: 265954393}
   - {fileID: 935266941}
+  - {fileID: 331189094}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -3929,7 +3957,6 @@ RectTransform:
   - {fileID: 1120904888}
   - {fileID: 987634178}
   - {fileID: 73818098}
-  - {fileID: 331189094}
   m_Father: {fileID: 1766117193}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -4123,6 +4150,14 @@ MonoBehaviour:
   centerBias: 2.2
   overlapPadding: 10
   maxSpawnTries: 120
+  shrinkToFitIfNeeded: 1
+  minButtonScale: 0.55
+  shrinkStep: 0.92
+  varyThoughtSizes: 1
+  thoughtSizeMultiplierRange: {x: 0.85, y: 1.25}
+  chanceToShrinkInsteadOfOverflow: 0.45
+  allowOverflowOutsideSpawnArea: 1
+  overflowRadiusMultiplier: 1.35
 --- !u!4 &1921377046
 Transform:
   m_ObjectHideFlags: 0
