@@ -55,10 +55,10 @@ public class AudioClipManager : MonoBehaviour
     private void Update()
     {
         // For testing purposes
-        if (Input.GetKeyDown(KeyCode.P))
-        {
-            PlayDialogue();
-        }
+        //if (Input.GetKeyDown(KeyCode.P))
+        //{
+            //PlayDialogue();
+       // }
     }
 
     // used by SettingsMenu dialogue slider
