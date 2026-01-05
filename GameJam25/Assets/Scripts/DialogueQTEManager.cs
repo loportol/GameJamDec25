@@ -46,6 +46,30 @@ public class DialogueQTEManager : MonoBehaviour
     [Tooltip("How many tries before we give up and place it anyway.")]
     [SerializeField] private int maxSpawnTries = 120;
 
+    [Header("Spawn Fallback (keep all spawns)")]
+    [SerializeField] private bool shrinkToFitIfNeeded = true;
+
+    [SerializeField] private float minButtonScale = 0.55f;  // don’t shrink past this
+    [SerializeField] private float shrinkStep = 0.92f;      // each retry multiplies scale by this
+
+    [Header("Size Variety (some thoughts bigger/smaller)")]
+    [Tooltip("If enabled, each spawned thought gets a random size multiplier.")]
+    [SerializeField] private bool varyThoughtSizes = true;
+
+    [Tooltip("Random size multiplier applied per thought. e.g. (0.85, 1.25)")]
+    [SerializeField] private Vector2 thoughtSizeMultiplierRange = new Vector2(0.85f, 1.25f);
+
+    [Tooltip("If crowded, sometimes we shrink to fit; otherwise we allow overflow outside the spawn area.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float chanceToShrinkInsteadOfOverflow = 0.45f;
+
+    [Header("Overflow Fallback (allow thoughts outside the safe area)")]
+    [Tooltip("If true, when the spiral cannot find space, place outside spawnAreaRect instead of center/inside fallback.")]
+    [SerializeField] private bool allowOverflowOutsideSpawnArea = true;
+
+    [Tooltip("How far outside the spawn area (radius multiplier) overflow placements go.")]
+    [SerializeField] private float overflowRadiusMultiplier = 1.35f;
+
     // store active buttons so we can enable/disable them and clear them
     private readonly List<ThoughtButtonUI> activeButtons = new List<ThoughtButtonUI>();
 
@@ -260,18 +284,92 @@ public class DialogueQTEManager : MonoBehaviour
         }
     }
 
+    // Distance-based scoring so fallback still spreads out (avoids stacking on last button)
+    private float MinDistanceToOtherButtons(Vector2 candidate)
+    {
+        float best = float.PositiveInfinity;
+
+        for (int i = 0; i < activeButtons.Count; i++)
+        {
+            ThoughtButtonUI other = activeButtons[i];
+            if (other == null) continue;
+
+            RectTransform otherRect = other.GetComponent<RectTransform>();
+            if (otherRect == null) continue;
+
+            Vector2 otherPos = otherRect.anchoredPosition;
+            float d = Vector2.Distance(candidate, otherPos);
+            if (d < best) best = d;
+        }
+
+        if (float.IsPositiveInfinity(best)) best = 999999f;
+        return best;
+    }
+
+    // Checks only noSpawn zones at a given candidate (without needing to permanently move the rect)
+    private bool CandidateHitsNoSpawnZones(RectTransform buttonRect, Vector2 candidate)
+    {
+        Vector2 prev = buttonRect.anchoredPosition;
+        buttonRect.anchoredPosition = candidate;
+
+        bool bad = OverlapsNoSpawnZones(buttonRect);
+
+        buttonRect.anchoredPosition = prev;
+        return bad;
+    }
+
+    // Smooth "thought appears" animation (prevents visible resize popping)
+    private IEnumerator AnimateThoughtIn(CanvasGroup cg, Transform t, Vector3 finalScale, float duration = 0.12f)
+    {
+        if (cg != null) cg.alpha = 0f;
+
+        Vector3 startScale = finalScale * 0.92f; // tiny pop-in
+        t.localScale = startScale;
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float p = Mathf.Clamp01(elapsed / duration);
+
+            float ease = 1f - Mathf.Pow(1f - p, 3f);
+
+            if (cg != null) cg.alpha = ease;
+            t.localScale = Vector3.LerpUnclamped(startScale, finalScale, ease);
+
+            yield return null;
+        }
+
+        if (cg != null) cg.alpha = 1f;
+        t.localScale = finalScale;
+    }
+
     private IEnumerator SpawnOneThoughtButtonCoroutine(ClipResponse clipResponse)
     {
         GameObject buttonObj = Instantiate(thoughtButtonPrefab, spawnAreaRect);
+
+        // base size from response
         buttonObj.transform.localScale *= clipResponse.responseSize;
+
+        // add variety (some bigger/smaller)
+        if (varyThoughtSizes)
+        {
+            float mult = Random.Range(thoughtSizeMultiplierRange.x, thoughtSizeMultiplierRange.y);
+            buttonObj.transform.localScale *= mult;
+        }
+
+        // hide while sizing/placing (prevents clunky resize showing)
+        CanvasGroup cg = buttonObj.GetComponent<CanvasGroup>();
+        if (cg == null) cg = buttonObj.AddComponent<CanvasGroup>();
+        cg.alpha = 0f;
 
         RectTransform rect = buttonObj.GetComponent<RectTransform>();
         ThoughtButtonUI button = buttonObj.GetComponent<ThoughtButtonUI>();
 
-        // set content FIRST 
+        // set content FIRST
         button.Setup(clipResponse, OnResponseSelected);
 
-        // Let TMP/layout compute sizes (THIS is the missing piece that causes "overlap later")
+        // Let TMP/layout compute sizes
         yield return null;
 
         // force rebuild now that TMP has had a frame
@@ -294,67 +392,177 @@ public class DialogueQTEManager : MonoBehaviour
         Canvas.ForceUpdateCanvases();
         LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
 
-        // now place it using its FINAL size
-        rect.anchoredPosition = GetSpiralSpawnPosition(rect);
+        Vector2 pos;
+        bool found = TryGetSpiralSpawnPosition(rect, out pos);
+
+        if (!found)
+        {
+            // If crowded: sometimes shrink to fit, otherwise allow overflow outside area
+            bool shouldShrink = shrinkToFitIfNeeded && (Random.value < chanceToShrinkInsteadOfOverflow);
+
+            if (shouldShrink)
+            {
+                float currentScale = buttonObj.transform.localScale.x;
+                bool placed = false;
+
+                while (currentScale > minButtonScale)
+                {
+                    currentScale *= shrinkStep;
+                    buttonObj.transform.localScale = new Vector3(currentScale, currentScale, 1f);
+
+                    // let layout update for the new scale
+                    yield return null;
+                    Canvas.ForceUpdateCanvases();
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+
+                    // update locked size
+                    LayoutElement le2 = buttonObj.GetComponent<LayoutElement>();
+                    if (le2 != null)
+                    {
+                        le2.preferredWidth = rect.rect.width;
+                        le2.preferredHeight = rect.rect.height;
+                    }
+
+                    Canvas.ForceUpdateCanvases();
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+
+                    if (TryGetSpiralSpawnPosition(rect, out pos))
+                    {
+                        rect.anchoredPosition = pos;
+                        placed = true;
+                        break;
+                    }
+                }
+
+                if (!placed)
+                {
+                    rect.anchoredPosition = pos; // best-effort spot
+                }
+            }
+            else
+            {
+                rect.anchoredPosition = pos; // best-effort spot
+            }
+        }
+        else
+        {
+            rect.anchoredPosition = pos;
+        }
+
+        // reveal AFTER final size + final position
+        StartCoroutine(AnimateThoughtIn(cg, buttonObj.transform, buttonObj.transform.localScale));
 
         button.SetInteractable(false);
         activeButtons.Add(button);
     }
 
-    // Expands outward from the center (spiral) until it finds a non-overlapping spot.
-    private Vector2 GetSpiralSpawnPosition(RectTransform buttonRect)
+    // Fills the whole spawn rect with an even sunflower spiral.
+    // If strict placement fails, it chooses the "best" spot (max distance from others)
+    // so it expands outward and doesn't stack on the last one.
+    private bool TryGetSpiralSpawnPosition(RectTransform buttonRect, out Vector2 foundPos)
     {
-        // bounds inside area (account for button size so it doesn't clip)
         float halfW = buttonRect.rect.width * 0.5f;
         float halfH = buttonRect.rect.height * 0.5f;
 
-        float minX = spawnAreaRect.rect.xMin + halfW;
-        float maxX = spawnAreaRect.rect.xMax - halfW;
-        float minY = spawnAreaRect.rect.yMin + halfH;
-        float maxY = spawnAreaRect.rect.yMax - halfH;
+        // Allowed center positions (keeps the whole button inside)
+        float minX = spawnAreaRect.rect.xMin /* + halfW */;   // allow overflow if needed
+        float maxX = spawnAreaRect.rect.xMax /* - halfW */;
+        float minY = spawnAreaRect.rect.yMin /* + halfH */;
+        float maxY = spawnAreaRect.rect.yMax /* - halfH */;
 
         Vector2 center = spawnAreaRect.rect.center;
 
-        float maxRadiusX = Mathf.Min(center.x - minX, maxX - center.x);
-        float maxRadiusY = Mathf.Min(center.y - minY, maxY - center.y);
-        float maxRadius = Mathf.Max(5f, Mathf.Min(maxRadiusX, maxRadiusY));
+        // Use full rectangle extents (ellipse fill)
+        float radiusX = (maxX - minX) * 0.5f;
+        float radiusY = (maxY - minY) * 0.5f;
 
-        // golden angle spiral
         const float goldenAngle = 2.39996323f;
+        float jitterPx = 4f;
 
-        for (int attempt = 0; attempt < maxSpawnTries; attempt++)
+        // -------- PASS 1: strict no-overlap INSIDE the rect (button must fit) --------
+        float fitMinX = spawnAreaRect.rect.xMin + halfW;
+        float fitMaxX = spawnAreaRect.rect.xMax - halfW;
+        float fitMinY = spawnAreaRect.rect.yMin + halfH;
+        float fitMaxY = spawnAreaRect.rect.yMax - halfH;
+
+        bool canFitInside = (fitMinX <= fitMaxX && fitMinY <= fitMaxY);
+
+        if (canFitInside)
         {
-            // progress expands outward; centerBias makes earlier attempts tighter near center
-            float p = (maxSpawnTries <= 1) ? 1f : (float)attempt / (maxSpawnTries - 1);
-            float radius = Mathf.Lerp(0f, maxRadius, Mathf.Pow(p, 1f / Mathf.Max(0.01f, centerBias)));
+            float fitRadiusX = (fitMaxX - fitMinX) * 0.5f;
+            float fitRadiusY = (fitMaxY - fitMinY) * 0.5f;
 
-            float angle = attempt * goldenAngle;
+            for (int attempt = 0; attempt < maxSpawnTries; attempt++)
+            {
+                float t = (attempt + 0.5f) / Mathf.Max(1f, maxSpawnTries);
+                float r = Mathf.Sqrt(t);
+                float angle = attempt * goldenAngle;
 
-            // slight jitter so it doesn't look too patterned
-            float jitter = 0.15f;
-            float jx = Random.Range(-jitter, jitter);
-            float jy = Random.Range(-jitter, jitter);
+                float x = center.x + Mathf.Cos(angle) * r * fitRadiusX + Random.Range(-jitterPx, jitterPx);
+                float y = center.y + Mathf.Sin(angle) * r * fitRadiusY + Random.Range(-jitterPx, jitterPx);
 
-            float x = center.x + Mathf.Cos(angle) * radius + jx * radius;
-            float y = center.y + Mathf.Sin(angle) * radius + jy * radius;
+                x = Mathf.Clamp(x, fitMinX, fitMaxX);
+                y = Mathf.Clamp(y, fitMinY, fitMaxY);
 
-            x = Mathf.Clamp(x, minX, maxX);
-            y = Mathf.Clamp(y, minY, maxY);
+                Vector2 candidate = new Vector2(x, y);
+                buttonRect.anchoredPosition = candidate;
+
+                if (OverlapsNoSpawnZones(buttonRect)) continue;
+                if (OverlapsOtherButtons(buttonRect)) continue;
+
+                foundPos = candidate;
+                return true;
+            }
+        }
+
+        // -------- PASS 2: best-effort spread (never stack on last) --------
+        // This pass allows positions that may overlap others, but picks the one
+        // that is farthest from existing buttons. Still respects noSpawnZones.
+        Vector2 bestCandidate = center;
+        float bestScore = -1f;
+
+        int extraSamples = Mathf.Max(300, maxSpawnTries * 3);
+
+        // If overflow is allowed, search a bigger ellipse beyond the rect
+        float searchRadiusX = radiusX * (allowOverflowOutsideSpawnArea ? overflowRadiusMultiplier : 1f);
+        float searchRadiusY = radiusY * (allowOverflowOutsideSpawnArea ? overflowRadiusMultiplier : 1f);
+
+        for (int attempt = 0; attempt < extraSamples; attempt++)
+        {
+            float t = (attempt + 0.5f) / Mathf.Max(1f, extraSamples);
+            float r = Mathf.Sqrt(t);
+            float angle = (attempt + maxSpawnTries) * goldenAngle;
+
+            float x = center.x + Mathf.Cos(angle) * r * searchRadiusX + Random.Range(-jitterPx, jitterPx);
+            float y = center.y + Mathf.Sin(angle) * r * searchRadiusY + Random.Range(-jitterPx, jitterPx);
+
+            // Do NOT clamp here. Let it go outside if overflow is enabled.
+            if (!allowOverflowOutsideSpawnArea)
+            {
+                x = Mathf.Clamp(x, fitMinX, fitMaxX);
+                y = Mathf.Clamp(y, fitMinY, fitMaxY);
+            }
 
             Vector2 candidate = new Vector2(x, y);
 
-            buttonRect.anchoredPosition = candidate;
+            // still respect no-spawn zones (even during overflow)
+            if (CandidateHitsNoSpawnZones(buttonRect, candidate)) continue;
 
-            if (OverlapsNoSpawnZones(buttonRect)) continue;
-            if (OverlapsOtherButtons(buttonRect)) continue;
+            // score = distance to nearest existing button (bigger is better)
+            float score = MinDistanceToOtherButtons(candidate);
 
-            return candidate;
+            // tiny bonus for being farther from center (helps it expand outward over time)
+            score += Vector2.Distance(candidate, center) * 0.05f;
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestCandidate = candidate;
+            }
         }
 
-        // last resort: anywhere inside (still clamped)
-        float rx = Random.Range(minX, maxX);
-        float ry = Random.Range(minY, maxY);
-        return new Vector2(rx, ry);
+        foundPos = bestCandidate;
+        return false;
     }
 
     private bool OverlapsNoSpawnZones(RectTransform buttonRect)
@@ -382,23 +590,23 @@ public class DialogueQTEManager : MonoBehaviour
 
     private bool RectsOverlap(RectTransform a, RectTransform b)
     {
-        Rect ra = GetWorldRect(a, overlapPadding);
-        Rect rb = GetWorldRect(b, overlapPadding);
+        Rect ra = GetRectInSpawnAreaSpace(a, overlapPadding);
+        Rect rb = GetRectInSpawnAreaSpace(b, overlapPadding);
         return ra.Overlaps(rb);
     }
 
-    private Rect GetWorldRect(RectTransform rt, float padding)
+    private Rect GetRectInSpawnAreaSpace(RectTransform rt, float padding)
     {
-        Vector3[] corners = new Vector3[4];
-        rt.GetWorldCorners(corners);
+        // This includes ALL children (TMP text, images, etc.) in spawnAreaRect local space.
+        Bounds bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(spawnAreaRect, rt);
 
-        Vector2 min = corners[0];
-        Vector2 max = corners[2];
+        Vector2 size = bounds.size;
+        Vector2 center = bounds.center;
 
-        min -= new Vector2(padding, padding);
-        max += new Vector2(padding, padding);
+        // Apply padding as extra "personal space"
+        size += new Vector2(padding * 2f, padding * 2f);
 
-        return new Rect(min, max - min);
+        return new Rect(center - size * 0.5f, size);
     }
 
     private IEnumerator ResponseTimer()
@@ -508,7 +716,19 @@ public class DialogueQTEManager : MonoBehaviour
     private IEnumerator SpawnEndingThoughtButton(string buttonText, float scale)
     {
         GameObject buttonObj = Instantiate(thoughtButtonPrefab, spawnAreaRect);
+
+        // base scale + some variety
         buttonObj.transform.localScale *= scale;
+        if (varyThoughtSizes)
+        {
+            float mult = Random.Range(thoughtSizeMultiplierRange.x, thoughtSizeMultiplierRange.y);
+            buttonObj.transform.localScale *= mult;
+        }
+
+        // hide while sizing/placing (prevents clunky resize showing)
+        CanvasGroup cg = buttonObj.GetComponent<CanvasGroup>();
+        if (cg == null) cg = buttonObj.AddComponent<CanvasGroup>();
+        cg.alpha = 0f;
 
         RectTransform rect = buttonObj.GetComponent<RectTransform>();
 
@@ -537,7 +757,62 @@ public class DialogueQTEManager : MonoBehaviour
         Canvas.ForceUpdateCanvases();
         LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
 
-        rect.anchoredPosition = GetSpiralSpawnPosition(rect);
+        Vector2 pos;
+        bool found = TryGetSpiralSpawnPosition(rect, out pos);
+
+        if (!found)
+        {
+            bool shouldShrink = shrinkToFitIfNeeded && (Random.value < chanceToShrinkInsteadOfOverflow);
+
+            if (shouldShrink)
+            {
+                float currentScale = buttonObj.transform.localScale.x;
+                bool placed = false;
+
+                while (currentScale > minButtonScale)
+                {
+                    currentScale *= shrinkStep;
+                    buttonObj.transform.localScale = new Vector3(currentScale, currentScale, 1f);
+
+                    yield return null;
+                    Canvas.ForceUpdateCanvases();
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+
+                    LayoutElement le2 = buttonObj.GetComponent<LayoutElement>();
+                    if (le2 != null)
+                    {
+                        le2.preferredWidth = rect.rect.width;
+                        le2.preferredHeight = rect.rect.height;
+                    }
+
+                    Canvas.ForceUpdateCanvases();
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+
+                    if (TryGetSpiralSpawnPosition(rect, out pos))
+                    {
+                        rect.anchoredPosition = pos;
+                        placed = true;
+                        break;
+                    }
+                }
+
+                if (!placed)
+                {
+                    rect.anchoredPosition = pos; // best-effort spot
+                }
+            }
+            else
+            {
+                rect.anchoredPosition = pos; // best-effort spot
+            }
+        }
+        else
+        {
+            rect.anchoredPosition = pos;
+        }
+
+        // reveal AFTER final size + final position
+        StartCoroutine(AnimateThoughtIn(cg, buttonObj.transform, buttonObj.transform.localScale));
 
         // make sure it cannot be clicked
         ThoughtButtonUI tb = buttonObj.GetComponent<ThoughtButtonUI>();
