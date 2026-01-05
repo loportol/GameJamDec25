@@ -5,178 +5,221 @@
 
 title: Interaction1
 ---
-<<set $wordCount = 15>>
+<<wps UIManagers 4 2>>
 Ah, there you are. 
+<<wps UIManagers 11 3>>
 I was getting worried that you weren’t going to show up.
 ===
 
 title: Interaction2
 ---
-<<set $wordCount = 20>>
-It’s alright. 
-I ordered for you, I hope that’s okay. 
+<<wps UIManagers 10 8>>
+It’s alright. I ordered for you, I hope that’s okay. 
+<<wps UIManagers 10 8>>
 You liked the salmon last time we were here, correct?
 ===
 
 title: Interaction3a
 ---
-<<set $wordCount = 76>>
-Well, you ate all of it last time, 
-so I figured you liked it.
+<<wps UIManagers 14 4>>
+Well, you ate all of it last time, so I figured you liked it.
+<<wps UIManagers 9 4>>
 Do you ever hear from Trinity from high school? 
-I ran into her mom a couple nights ago 
-at the Phipp’s over on Shelby and Clark and you’ll never guess it 
-but apparently they barely speak anymore. 
-She wouldn’t tell me the reason 
-but I can’t say it came as a shock. 
+<<wps UIManagers 17 3>>
+I ran into her mom a couple nights ago at the Phipp’s over 
+<<wps UIManagers 11 3>>
+on Shelby and Clark and you’ll never guess it 
+<<wps UIManagers 11 4>>
+but apparently they don't speak anymore. 
+<<wps UIManagers 15 4>>
+She wouldn’t tell me the reason but I can’t say it came as a shock. 
+<<wps UIManagers 10 7>>
 That girl was always running about and disrespecting her parents. 
-It’s just terrible though, 
-treating her poor mother like that.
+<<wps UIManagers 10 8>>
+It’s just terrible though, treating her poor mother like that.
 ===
 
 title: Interaction3b
 ---
-<<set $wordCount = 88>>
+<<wps UIManagers 15 8>>
 Whatever? 
 Are they teaching you manners at that school 
 or just how to sass your parents?
+<<wps UIManagers 9 4>>
 Do you ever hear from Trinity from high school? 
-I ran into her mom a couple nights ago 
-at the Phipp’s over on Shelby and Clark and you’ll never guess it 
-but apparently they barely speak anymore. 
-She wouldn’t tell me the reason 
-but I can’t say it came as a shock. 
+<<wps UIManagers 17 3>>
+I ran into her mom a couple nights ago at the Phipp’s over 
+<<wps UIManagers 11 3>>
+on Shelby and Clark and you’ll never guess it 
+<<wps UIManagers 11 4>>
+but apparently they don't speak anymore. 
+<<wps UIManagers 15 4>>
+She wouldn’t tell me the reason but I can’t say it came as a shock. 
+<<wps UIManagers 10 7>>
 That girl was always running about and disrespecting her parents. 
-It’s just terrible though, 
-treating her poor mother like that.
+<<wps UIManagers 10 8>>
+It’s just terrible though, treating her poor mother like that.
 ===
 
 title: Interaction3c
 ---
-<<set $wordCount = 76>>
+<<wps UIManagers 4 2>>
 Good. I thought so.
+<<wps UIManagers 9 4>>
 Do you ever hear from Trinity from high school? 
-I ran into her mom a couple nights ago 
-at the Phipp’s over on Shelby and Clark and you’ll never guess it 
-but apparently they barely speak anymore. 
-She wouldn’t tell me the reason 
-but I can’t say it came as a shock. 
+<<wps UIManagers 17 3>>
+I ran into her mom a couple nights ago at the Phipp’s over 
+<<wps UIManagers 11 3>>
+on Shelby and Clark and you’ll never guess it 
+<<wps UIManagers 11 4>>
+but apparently they don't speak anymore. 
+<<wps UIManagers 15 4>>
+She wouldn’t tell me the reason but I can’t say it came as a shock. 
+<<wps UIManagers 10 7>>
 That girl was always running about and disrespecting her parents. 
-It’s just terrible though, 
-treating her poor mother like that.
+<<wps UIManagers 10 8>>
+It’s just terrible though, treating her poor mother like that.
 ===
 
 title: Interaction4
 ---
-<<set $wordCount = 88>>
+<<wps UIManagers 4 2>>
 You are slouching again. 
+<<wps UIManagers 13 4>>
 I told you, 
 I want you to have more pride in your appearance. 
-How will the other kids at your school 
-know you’re serious if you look like a slob? 
-You’re a very smart kid. 
-Always so respectful.
+<<wps UIManagers 17 5>>
+How will the other kids at your school know you’re serious 
+if you look like a slob? 
+<<wps UIManagers 8 4>>
+You’re a very smart kid. Always so respectful.
+<<wps UIManagers 11 4>>
 I just want other people to be able to see that. 
+<<wps UIManagers 11 5>>
 You know, your father and I are very proud of you. 
+<<wps UIManagers 10 4>>
 We always wanted you to go to a good school. 
+<<wps UIManagers 15 6>>
 When you got into college, 
-we knew you would have opportunities we never had.
+we knew you would have opportunities that we never had.
 ===
 
 title: Interaction5a
 ---
-<<set $wordCount = 14>>
+<<wps UIManagers 5 3>>
 It was just an observation. 
-You need to lighten up. 
-You’re always so dramatic.
+<<wps UIManagers 9 5>>
+You need to lighten up. You’re always so dramatic.
 ===
 
 title: Interaction5b
 ---
-<<set $wordCount = 25>>
+<<wps UIManagers 4 2>>
 We were so worried. 
+<<wps UIManagers 14 4>>
 All we want is for you to have a life better than we did. 
+<<wps UIManagers 7 2.5>>
 Everything we do, we do for you.
 ===
 
 title: Interaction5c
 ---
-<<set $wordCount = 20>>
+<<wps UIManagers 1 1>>
 Alright. 
-I guess you called me here for a reason. 
-Always so dramatic. 
+<<wps UIManagers 12 4>>
+I guess you called me here for a reason. Always so dramatic. 
+<<wps UIManagers 7 2.5>>
 What did you want to speak about?
 ===
 
 title: Interaction6a
 ---
-<<set $wordCount = 75>>
+<<wps UIManagers 8 3>>
 Is there something the matter with you today? 
+<<wps UIManagers 10 3>>
 After you hadn’t bothered to answer my calls all week, 
+<<wps UIManagers 11 3>>
 I was excited to meet my daughter for a nice lunch. 
+<<wps UIManagers 8 3>>
 If you remember, you reached out to me. 
+<<wps UIManagers 7 1.5>>
 And here you are getting worked up 
+<<wps UIManagers 8 3.5>>
 after being cold and unresponsive this whole conversation. 
-I swear ever since you were a child, 
-everything has to be an event with you. 
+<<wps UIManagers 16 4>>
+I swear ever since you were a child, everything has to be an event with you. 
+<<wps UIManagers 7 2.5>>
 I bet it’s those friends of yours.
 ===
 
 title: Interaction6b
 ---
-<<set $wordCount = 44>>
-We were so worried. 
-We love you very much. 
-I hope you know that. 
+<<wps UIManagers 10 5>>
+We love you very much. I hope you know that. 
+<<wps UIManagers 11 4>>
 Everyday we feel so blessed to have such a perfect daughter. 
-And of course it doesn’t hurt 
-that I get to brag about you to the girls at the salon.
+<<wps UIManagers 11 3>>
+And of course it doesn’t hurt that I get to brag 
+<<wps UIManagers 9 3>>
+about you to the girls at the salon.
 ===
 
 title: Interaction6c
 ---
-<<set $wordCount = 9>>
-You what? 
-You dropped out? 
+<<wps UIManagers 2 3>>
+You what? You dropped out?
+<<wps UIManagers 4 3>>
 When did this happen?
 ===
 
 title: Interaction7a
 ---
-<<set $wordCount = 48>>
+<<wps UIManagers 12 4>>
 I wish your father could hear the way you talk to me! 
+<<wps UIManagers 10 2.5>>
 I’m sorry, but after all that I’ve done for you, 
+<<wps UIManagers 8 2.5>>
 I don’t deserve to be treated like this. 
+<<wps UIManagers 7 3.5>>
 Everything I’ve done, I’ve done for you. 
-But since I’m such a terrible mother, 
-I’ll leave you alone.
+<<wps UIManagers 11 3.5>>
+But since I’m such a terrible mother, I’ll leave you alone.
 ===
 
 title: Interaction7b
 ---
-<<set $wordCount = 56>>
-Now where is that waiter? 
-I put in our meals well over 15 minutes ago. 
+<<wps UIManagers 15 6>>
+Now where is that waiter? I put in our meals well over 15 minutes ago. 
+<<wps UIManagers 11 4>>
 It seems good service is ridiculously hard to find these days. 
+<<wps UIManagers 9 2>>
 You would think they could at least come over 
-and take your drink order.
-Honestly!
+<<wps UIManagers 6 3>>
+and take your drink order. Honestly!
+<<wps UIManagers 10 3>>
 Honey, I love you, but next time we go out, 
+<<wps UIManagers 5 2>>
 I am picking the restaurant.
 ===
 
 title: Interaction7c
 ---
-<<set $wordCount = 65>>
+<<wps UIManagers 3 3>>
 Oh no, Honey. 
-You don’t have to apologize. 
-And please don’t cry. 
+<<wps UIManagers 9 3.5>>
+You don’t have to apologize. And please don’t cry. 
+<<wps UIManagers 10 3.5>>
 I know, I know we put these expectations on you, 
+<<wps UIManagers 12 4>>
 we just want the best for you and if school isn’t that, 
+<<wps UIManagers 7 2>>
 we can help you work it out. 
+<<wps UIManagers 9 4>>
 Whatever is going on, I promise we’ll support you. 
-Me and your father. 
-It’s just school. 
+<<wps UIManagers 7 3>>
+Me and your father. It’s just school. 
+<<wps UIManagers 3 2>>
 Listen, come here. 
+<<wps UIManagers 5 2>>
 Thank you for telling me.
 ===

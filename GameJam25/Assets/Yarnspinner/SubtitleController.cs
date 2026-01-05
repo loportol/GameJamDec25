@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using UnityEngine;
 using Yarn.Unity;
 
@@ -29,13 +30,12 @@ public class SubtitleController : MonoBehaviour
         if (yarnNode == null) return;
 
         if (runner) runner.StartDialogue(yarnNode);
-        float audioLength = clip.GetAudioClip().length;
-
-        if (runner.VariableStorage.TryGetValue<float>("$wordCount", out var wordCount))
-        {
-
-            int wordPerSecond = Mathf.FloorToInt(wordCount / audioLength);
-            presenter.wordsPerSecond = wordPerSecond;
-        }
     }
+
+    [YarnCommand("wps")]
+    public void CalculateWPS(int wordCount, float audioLength)
+    {
+        int wordPerSecond = Mathf.FloorToInt(wordCount / audioLength);
+        presenter.wordsPerSecond = wordPerSecond;
+    } 
 }
