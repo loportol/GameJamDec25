@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -25,12 +24,17 @@ public class AudioClipManager : MonoBehaviour
     private AudioSource audioSource;
     private AudioClipSO clipToPlay;
 
-    // track pause state so paused doesn't count as ended
+    // track pause state
     private bool isPaused = false;
 
-    // dialogue volume system 
+    // authoritative "dialogue active" state (prevents QTE conflicts)
+    private bool dialogueActive = false;
+
+    // dialogue volume system
     private const string DIALOGUE_KEY = "dialogue_volume";
     public static float GlobalDialogueVolume = 1f;
+
+    private Coroutine playRoutine = null;
 
     private void Awake()
     {
@@ -44,21 +48,12 @@ public class AudioClipManager : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         clipToPlay = startingAudioClip;
 
-        // load saved volume right away so audio doesn't "randomly" change between runs
+        // load saved volume right away
         GlobalDialogueVolume = PlayerPrefs.GetFloat(DIALOGUE_KEY, 1f);
         if (audioSource != null)
         {
             audioSource.volume = GlobalDialogueVolume;
         }
-    }
-
-    private void Update()
-    {
-        // For testing purposes
-        //if (Input.GetKeyDown(KeyCode.P))
-        //{
-            //PlayDialogue();
-       // }
     }
 
     // used by SettingsMenu dialogue slider
@@ -73,30 +68,62 @@ public class AudioClipManager : MonoBehaviour
         }
     }
 
-    public float GetDialogueVolume()
-    {
-        return GlobalDialogueVolume;
-    }
+    public float GetDialogueVolume() => GlobalDialogueVolume;
 
     public void PlayDialogue()
     {
-        if (audioSource.isPlaying) return;
-        Debug.Log("Playing audio: " + clipToPlay.name);
-        //if this clip is an ending, trigger ending UI instead of normal loop
-        if (clipToPlay != null && clipToPlay.IsEnding())
+        if (audioSource == null)
         {
-            audioSource.clip = clipToPlay.GetAudioClip();
-            audioSource.volume = GlobalDialogueVolume; // keep volume consistent
+            Debug.LogWarning("PlayDialogue called but AudioSource is missing.");
+            return;
+        }
+
+        if (clipToPlay == null)
+        {
+            Debug.LogWarning("PlayDialogue called but clipToPlay is null.");
+            return;
+        }
+
+        // if we’re currently playing, don’t stack calls
+        if (audioSource.isPlaying) return;
+
+        Debug.Log("Playing audio: " + clipToPlay.name);
+
+        // stop any stale routine (safety)
+        if (playRoutine != null)
+        {
+            StopCoroutine(playRoutine);
+            playRoutine = null;
+        }
+
+        // whenever dialogue starts, we're not paused + we are active
+        isPaused = false;
+        dialogueActive = true;
+
+        // if this clip is an ending, trigger ending UI too (but still run end logic)
+        if (clipToPlay.IsEnding())
+        {
+            AudioClip endClip = clipToPlay.GetAudioClip();
+            if (endClip == null)
+            {
+                Debug.LogWarning("Ending clip returned null AudioClip.");
+                dialogueActive = false;
+                return;
+            }
+
+            audioSource.clip = endClip;
+            audioSource.volume = GlobalDialogueVolume;
             audioSource.Play();
 
             dialogueHasStarted.Invoke(clipToPlay);
             endingReached.Invoke(clipToPlay);
+
+            playRoutine = StartCoroutine(PlayDialogueCoroutine(clipToPlay));
             return;
         }
 
         dialogueHasStarted.Invoke(clipToPlay);
-        StartCoroutine(PlayDialogueCoroutine(clipToPlay));
-  
+        playRoutine = StartCoroutine(PlayDialogueCoroutine(clipToPlay));
     }
 
     private IEnumerator PlayDialogueCoroutine(AudioClipSO clip)
@@ -104,44 +131,72 @@ public class AudioClipManager : MonoBehaviour
         if (clip == null)
         {
             Debug.LogWarning("PlayDialogueCoroutine got null clip.");
+            dialogueActive = false;
             yield break;
         }
 
-        audioSource.clip = clip.GetAudioClip();
-        audioSource.volume = GlobalDialogueVolume; // keep volume consistent
+        AudioClip unityClip = clip.GetAudioClip();
+        if (unityClip == null)
+        {
+            Debug.LogWarning("PlayDialogueCoroutine got AudioClipSO with null AudioClip.");
+            dialogueActive = false;
+            yield break;
+        }
+
+        audioSource.clip = unityClip;
+        audioSource.volume = GlobalDialogueVolume;
         audioSource.Play();
 
-        // whenever dialogue starts, we're not paused
-        isPaused = false;
-
+        // choose skip fallback right away
         clipToPlay = clip.GetNextClipIfChoiceSkipped();
 
-        // wait until audio actually starts playing
-        yield return new WaitUntil(() => audioSource.clip != null && audioSource.time > 0f);
-
-        // do NOT wait for "!isPlaying" because Pause() makes isPlaying false
-        // instead, wait until we've reached the end of the clip by time
-        while (audioSource.clip != null && audioSource.time < audioSource.clip.length)
+        // wait until audio actually starts reporting time
+        float startTimeout = 1.0f;
+        float t = 0f;
+        while (audioSource.clip != null && audioSource.time <= 0f && t < startTimeout)
         {
-            // if audio is paused, time will not move anyway, so this just waits safely
+            t += Time.unscaledDeltaTime;
             yield return null;
         }
 
+        // now wait for real end (Pause-safe)
+        // IMPORTANT: don't use isPlaying alone because Pause() makes isPlaying false
+        while (audioSource.clip == unityClip)
+        {
+            if (isPaused)
+            {
+                yield return null;
+                continue;
+            }
+
+            // if the clip is basically done, break
+            if (audioSource.time >= unityClip.length - 0.01f)
+            {
+                break;
+            }
+
+            yield return null;
+        }
+
+        // mark inactive BEFORE invoking, so QTE won't block on IsDialogueActive()
+        dialogueActive = false;
+
         // now it ACTUALLY ended
         dialogueHasEnded.Invoke();
+
+        playRoutine = null;
     }
 
-    // QTE calls this when a player actually clicks a response button.
+    // QTE calls this when a player clicks a response button.
     public void ChooseResponse(ClipResponse choice)
     {
         if (choice == null)
         {
             Debug.LogWarning("ChooseResponse called with null choice; defaulting to skip.");
-            PlayDialogue(); // will use nextClipIfChoiceSkipped that we already set during playback
+            PlayDialogue();
             return;
         }
 
-        // if a next clip exists, use it. If not, fall back to whatever skip is set to.
         if (choice.nextClipToPlay != null)
         {
             clipToPlay = choice.nextClipToPlay;
@@ -149,8 +204,7 @@ public class AudioClipManager : MonoBehaviour
         else
         {
             Debug.LogWarning("No next clip set on chosen response; defaulting to skipped-choice clip.");
-            // clipToPlay was already set to nextClipIfChoiceSkipped inside PlayDialogueCoroutine
-            // so we can just leave it alone here.
+            // clipToPlay already set to nextClipIfChoiceSkipped inside PlayDialogueCoroutine
         }
 
         PlayDialogue();
@@ -158,6 +212,8 @@ public class AudioClipManager : MonoBehaviour
 
     public void PauseDialogue(bool pause)
     {
+        if (audioSource == null) return;
+
         isPaused = pause;
 
         if (pause)
@@ -172,12 +228,22 @@ public class AudioClipManager : MonoBehaviour
 
     public void StopDialogue()
     {
+        if (audioSource == null) return;
+
         audioSource.Stop();
+
+        if (playRoutine != null)
+        {
+            StopCoroutine(playRoutine);
+            playRoutine = null;
+        }
+
+        isPaused = false;
+        dialogueActive = false;
     }
 
     public float GetPlaybackTime()
     {
-        // how many seconds into the current audio clip we are
         return audioSource != null ? audioSource.time : 0f;
     }
 
@@ -185,15 +251,17 @@ public class AudioClipManager : MonoBehaviour
     {
         return audioSource != null && audioSource.isPlaying;
     }
-    public bool IsDialogueActive()
-{
-    return (audioSource != null && audioSource.clip != null && audioSource.time < audioSource.clip.length);
-}
 
-public bool IsPaused()
-{
-    return isPaused;
-}
+    public bool IsDialogueActive()
+    {
+        // dialogueActive is authoritative and will flip false before dialogueHasEnded fires
+        return dialogueActive;
+    }
+
+    public bool IsPaused()
+    {
+        return isPaused;
+    }
 
     public float GetCurrentClipLength()
     {

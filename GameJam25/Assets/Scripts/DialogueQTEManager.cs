@@ -4,8 +4,7 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using TMPro;
 
-// NOTE: Remove this in Unity unless you truly need it.
-// It can cause weird platform/build issues (and you’re not using it here).
+// NOTE: This import is unnecessary in Unity and can cause platform issues in builds.
 // using System.Runtime.InteropServices.WindowsRuntime;
 
 public class DialogueQTEManager : MonoBehaviour
@@ -74,7 +73,9 @@ public class DialogueQTEManager : MonoBehaviour
     [Tooltip("How far outside the spawn area (radius multiplier) overflow placements go.")]
     [SerializeField] private float overflowRadiusMultiplier = 1.35f;
 
-    // store active buttons so we can enable/disable them and clear them
+    [Header("Debug")]
+    [SerializeField] private bool debugLogs = true;
+
     private readonly List<ThoughtButtonUI> activeButtons = new List<ThoughtButtonUI>();
 
     private bool responded = false;
@@ -85,12 +86,13 @@ public class DialogueQTEManager : MonoBehaviour
     private bool timerIsActive = false;
     private bool inResponseWindow = false; // only true AFTER audio ends
 
-    // BUILD-SAFE: if OnDialogueEnded fires while audio still reports "active" (common in builds),
-    // we keep trying until it becomes safe to enable buttons.
     private bool responseWindowPending = false;
     private Coroutine responseWindowRoutine;
 
     private MomPortraitRoutes portraitManager;
+
+    // NEW: session token so old coroutines can safely abort
+    private int dialogueRunId = 0;
 
     private void Start()
     {
@@ -106,16 +108,20 @@ public class DialogueQTEManager : MonoBehaviour
             Debug.Log("Could not find MomPortraitRoutes, can't set portrait for mom");
     }
 
+    private void StopSpawnRoutine(string reason)
+    {
+        if (spawnRoutine != null)
+        {
+            StopCoroutine(spawnRoutine);
+            spawnRoutine = null;
+
+            if (debugLogs) Debug.Log($"[QTE] Spawn FORCE-STOP ({reason}).");
+        }
+    }
+
     public void SetPaused(bool paused)
     {
         isPaused = paused;
-
-        // If dialogue already ended while paused, we "owe" the response window.
-        // On unpause, attempt to enter immediately.
-        if (!paused && responseWindowPending)
-        {
-            TryEnterResponseWindowNow();
-        }
 
         SetButtonsInteractable(!paused && inResponseWindow);
 
@@ -127,6 +133,11 @@ public class DialogueQTEManager : MonoBehaviour
             }
             else
             {
+                if (responseWindowPending)
+                {
+                    TryEnterResponseWindowNow();
+                }
+
                 if (timerIsActive)
                 {
                     timerSlider.gameObject.SetActive(true);
@@ -137,6 +148,11 @@ public class DialogueQTEManager : MonoBehaviour
 
     private void OnDialogueStarted(AudioClipSO clip)
     {
+        // bump session id so any old coroutine exits
+        dialogueRunId++;
+
+        if (debugLogs) Debug.Log($"[QTE] Dialogue STARTED. clip={(clip != null ? clip.name : "null")} runId={dialogueRunId}");
+
         responded = false;
         inResponseWindow = false;
         responseWindowPending = false;
@@ -147,35 +163,62 @@ public class DialogueQTEManager : MonoBehaviour
             responseWindowRoutine = null;
         }
 
+        // important: stop any leftover spawn routine from a previous clip
+        StopSpawnRoutine("new dialogue started");
+
         ClearButtons();
         timerSlider.gameObject.SetActive(false);
 
-        if (spawnRoutine != null) StopCoroutine(spawnRoutine);
-        spawnRoutine = StartCoroutine(SpawnDuringAudio(clip));
+        // start spawning for THIS run
+        spawnRoutine = StartCoroutine(SpawnDuringAudio(clip, dialogueRunId));
     }
 
     private void OnDialogueEnded()
     {
-        // We ALWAYS mark pending, because in builds "ended event" can fire
-        // while the audio system still reports active for a few frames.
+        if (debugLogs) Debug.Log("[QTE] Dialogue ENDED event received.");
+
         responseWindowPending = true;
 
-        // If paused, we can’t enter now. We'll enter on unpause.
-        if (isPaused) return;
+        // CRITICAL FIX: stop spawning as soon as audio ends
+        StopSpawnRoutine("dialogue ended");
 
-        // Start a retry routine that waits until dialogue is truly inactive.
+        if (isPaused)
+        {
+            if (debugLogs) Debug.Log("[QTE] Dialogue ended while paused -> response window pending.");
+            return;
+        }
+
         if (responseWindowRoutine != null) StopCoroutine(responseWindowRoutine);
         responseWindowRoutine = StartCoroutine(WaitForDialogueToReallyEndThenEnter());
     }
 
     private IEnumerator WaitForDialogueToReallyEndThenEnter()
     {
-        // Small grace frame: helps with build-only event order differences
-        yield return null;
+        const float maxWaitSeconds = 1.25f;
+        float waited = 0f;
+
+        float clipLen = 0f;
+        if (AudioClipManager.Instance != null)
+            clipLen = AudioClipManager.Instance.GetCurrentClipLength();
 
         while (AudioClipManager.Instance != null && AudioClipManager.Instance.IsDialogueActive())
         {
             if (isPaused) yield break;
+
+            float t = AudioClipManager.Instance.GetPlaybackTime();
+            if (clipLen > 0.01f && t >= (clipLen - 0.03f))
+            {
+                if (debugLogs) Debug.Log($"[QTE] Forcing end-of-dialogue (playbackTime={t:0.00}/{clipLen:0.00})");
+                break;
+            }
+
+            waited += Time.unscaledDeltaTime;
+            if (waited >= maxWaitSeconds)
+            {
+                if (debugLogs) Debug.Log($"[QTE] Forcing response window after timeout ({maxWaitSeconds:0.00}s) - IsDialogueActive still true.");
+                break;
+            }
+
             yield return null;
         }
 
@@ -188,11 +231,18 @@ public class DialogueQTEManager : MonoBehaviour
         if (isPaused) return;
 
         if (AudioClipManager.Instance != null && AudioClipManager.Instance.IsDialogueActive())
+        {
+            if (debugLogs) Debug.Log("[QTE] TryEnterResponseWindowNow blocked (IsDialogueActive still true).");
             return;
+        }
 
         responseWindowPending = false;
 
+        // CRITICAL FIX: ensure nothing can spawn after we enter the response window
+        StopSpawnRoutine("entering response window");
+
         inResponseWindow = true;
+        if (debugLogs) Debug.Log($"[QTE] ENTER response window. activeButtons={activeButtons.Count}");
 
         SetButtonsInteractable(true);
         timerIsActive = true;
@@ -203,7 +253,7 @@ public class DialogueQTEManager : MonoBehaviour
         timerRoutine = StartCoroutine(ResponseTimer());
     }
 
-    private IEnumerator SpawnDuringAudio(AudioClipSO clip)
+    private IEnumerator SpawnDuringAudio(AudioClipSO clip, int runId)
     {
         if (clip == null)
         {
@@ -214,8 +264,11 @@ public class DialogueQTEManager : MonoBehaviour
         List<ClipResponse> responses = clip.GetResponses();
         if (responses == null || responses.Count == 0)
         {
+            if (debugLogs) Debug.Log($"[QTE] SpawnDuringAudio: no responses for clip {clip.name} (skipping spawns).");
             yield break;
         }
+
+        if (debugLogs) Debug.Log($"[QTE] Spawn START. clip={clip.name}, responseGroups={responses.Count} runId={runId}");
 
         List<ClipResponse> ordered = new List<ClipResponse>(responses);
         ordered.Sort((a, b) => a.spawnTime.CompareTo(b.spawnTime));
@@ -230,6 +283,12 @@ public class DialogueQTEManager : MonoBehaviour
 
         for (int idx = 0; idx < ordered.Count; idx++)
         {
+            // abort if a new dialogue started / run changed
+            if (runId != dialogueRunId) yield break;
+
+            // abort if we already entered response window / dialogue ended
+            if (inResponseWindow || responseWindowPending) yield break;
+
             while (isPaused) yield return null;
 
             ClipResponse cr = ordered[idx];
@@ -241,44 +300,93 @@ public class DialogueQTEManager : MonoBehaviour
                 nextTime = Mathf.Max(startTime, ordered[idx + 1].spawnTime);
 
             float rawWindow = nextTime - startTime;
-
             float spawnWindow = Mathf.Clamp(rawWindow * windowFillPercent, minSpawnWindowSeconds, maxSpawnWindowSeconds);
 
-            yield return WaitUntilDialogueTime(startTime);
+            if (debugLogs) Debug.Log($"[QTE] Spawn group idx={idx} start={startTime:0.00}s window={spawnWindow:0.00}s numToSpawn={cr.numToSpawn}");
 
-            yield return SpawnClipResponseButtonsSlow(cr, spawnWindow);
+            bool reached = false;
+            yield return StartCoroutine(WaitUntilDialogueTime(startTime, runId, reachedSetter: v => reached = v));
+
+            // if audio ended before reaching target time, stop spawning entirely
+            if (!reached) yield break;
+
+            yield return StartCoroutine(SpawnClipResponseButtonsSlow(cr, spawnWindow, runId));
         }
+
+        if (debugLogs) Debug.Log($"[QTE] Spawn STOP. clip={clip.name}, activeButtons={activeButtons.Count} runId={runId}");
     }
 
-    private IEnumerator WaitUntilDialogueTime(float targetSeconds)
+    // WaitUntilDialogueTime now tells caller whether we actually reached the time
+    private IEnumerator WaitUntilDialogueTime(float targetSeconds, int runId, System.Action<bool> reachedSetter)
     {
+        reachedSetter?.Invoke(false);
+
         if (!useAudioTime)
         {
             float waited = 0f;
             while (waited < targetSeconds)
             {
+                if (runId != dialogueRunId) yield break;
+                if (inResponseWindow || responseWindowPending) yield break;
+
                 if (!isPaused)
                 {
                     waited += Time.deltaTime;
                 }
                 yield return null;
             }
+
+            reachedSetter?.Invoke(true);
             yield break;
         }
 
-        while (AudioClipManager.Instance.IsDialogueActive() && AudioClipManager.Instance.GetPlaybackTime() < targetSeconds)
+        const float maxStallSeconds = 0.75f;
+        float stall = 0f;
+        float lastT = -999f;
+
+        while (AudioClipManager.Instance != null &&
+               AudioClipManager.Instance.IsDialogueActive() &&
+               AudioClipManager.Instance.GetPlaybackTime() < targetSeconds)
         {
+            if (runId != dialogueRunId) yield break;
+            if (inResponseWindow || responseWindowPending) yield break;
+
             if (isPaused)
             {
                 yield return null;
                 continue;
             }
 
+            float t = AudioClipManager.Instance.GetPlaybackTime();
+            if (Mathf.Abs(t - lastT) < 0.0001f)
+            {
+                stall += Time.unscaledDeltaTime;
+                if (stall >= maxStallSeconds)
+                {
+                    if (debugLogs) Debug.Log($"[QTE] WaitUntilDialogueTime stall escape (t={t:0.00}, target={targetSeconds:0.00}).");
+                    break;
+                }
+            }
+            else
+            {
+                stall = 0f;
+                lastT = t;
+            }
+
             yield return null;
         }
+
+        // if dialogue ended before we hit the target time, do NOT spawn this group
+        if (AudioClipManager.Instance == null || !AudioClipManager.Instance.IsDialogueActive())
+        {
+            reachedSetter?.Invoke(false);
+            yield break;
+        }
+
+        reachedSetter?.Invoke(true);
     }
 
-    private IEnumerator SpawnClipResponseButtonsSlow(ClipResponse clipResponse, float spawnWindowSeconds)
+    private IEnumerator SpawnClipResponseButtonsSlow(ClipResponse clipResponse, float spawnWindowSeconds, int runId)
     {
         if (clipResponse == null) yield break;
 
@@ -289,17 +397,26 @@ public class DialogueQTEManager : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
+            if (runId != dialogueRunId) yield break;
+            if (inResponseWindow || responseWindowPending) yield break;
+
             while (isPaused) yield return null;
 
-            yield return StartCoroutine(SpawnOneThoughtButtonCoroutine(clipResponse));
+            yield return StartCoroutine(SpawnOneThoughtButtonCoroutine(clipResponse, runId));
 
             float wait = interval + extraDelayBetweenThoughts;
 
             if (useAudioTime)
             {
+                if (AudioClipManager.Instance == null) yield break;
+
                 float start = AudioClipManager.Instance.GetPlaybackTime();
-                while (AudioClipManager.Instance.IsDialogueActive() && (AudioClipManager.Instance.GetPlaybackTime() - start) < wait)
+                while (AudioClipManager.Instance.IsDialogueActive() &&
+                       (AudioClipManager.Instance.GetPlaybackTime() - start) < wait)
                 {
+                    if (runId != dialogueRunId) yield break;
+                    if (inResponseWindow || responseWindowPending) yield break;
+
                     if (isPaused)
                     {
                         start = AudioClipManager.Instance.GetPlaybackTime();
@@ -309,12 +426,18 @@ public class DialogueQTEManager : MonoBehaviour
 
                     yield return null;
                 }
+
+                // if audio ended during the drip wait, stop spawning
+                if (!AudioClipManager.Instance.IsDialogueActive()) yield break;
             }
             else
             {
                 float waited = 0f;
                 while (waited < wait)
                 {
+                    if (runId != dialogueRunId) yield break;
+                    if (inResponseWindow || responseWindowPending) yield break;
+
                     if (!isPaused)
                     {
                         waited += Time.deltaTime;
@@ -325,6 +448,152 @@ public class DialogueQTEManager : MonoBehaviour
         }
     }
 
+    private IEnumerator AnimateThoughtIn(CanvasGroup cg, Transform t, Vector3 finalScale, float duration = 0.12f)
+    {
+        if (cg != null) cg.alpha = 0f;
+
+        Vector3 startScale = finalScale * 0.92f;
+        t.localScale = startScale;
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float p = Mathf.Clamp01(elapsed / duration);
+
+            float ease = 1f - Mathf.Pow(1f - p, 3f);
+
+            if (cg != null) cg.alpha = ease;
+            t.localScale = Vector3.LerpUnclamped(startScale, finalScale, ease);
+
+            yield return null;
+        }
+
+        if (cg != null) cg.alpha = 1f;
+        t.localScale = finalScale;
+    }
+
+    private IEnumerator SpawnOneThoughtButtonCoroutine(ClipResponse clipResponse, int runId)
+    {
+        if (runId != dialogueRunId) yield break;
+        if (inResponseWindow || responseWindowPending) yield break;
+
+        GameObject buttonObj = Instantiate(thoughtButtonPrefab, spawnAreaRect);
+
+        buttonObj.transform.localScale *= clipResponse.responseSize;
+
+        if (varyThoughtSizes)
+        {
+            float mult = Random.Range(thoughtSizeMultiplierRange.x, thoughtSizeMultiplierRange.y);
+            buttonObj.transform.localScale *= mult;
+        }
+
+        CanvasGroup cg = buttonObj.GetComponent<CanvasGroup>();
+        if (cg == null) cg = buttonObj.AddComponent<CanvasGroup>();
+        cg.alpha = 0f;
+
+        RectTransform rect = buttonObj.GetComponent<RectTransform>();
+        ThoughtButtonUI button = buttonObj.GetComponent<ThoughtButtonUI>();
+
+        button.Setup(clipResponse, OnResponseSelected);
+
+        yield return null;
+
+        if (runId != dialogueRunId)
+        {
+            Destroy(buttonObj);
+            yield break;
+        }
+
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+
+        LayoutElement le = buttonObj.GetComponent<LayoutElement>();
+        if (le == null) le = buttonObj.AddComponent<LayoutElement>();
+        le.preferredWidth = rect.rect.width;
+        le.preferredHeight = rect.rect.height;
+
+        ContentSizeFitter csf = buttonObj.GetComponent<ContentSizeFitter>();
+        if (csf != null) csf.enabled = false;
+
+        HorizontalLayoutGroup hlg = buttonObj.GetComponent<HorizontalLayoutGroup>();
+        if (hlg != null) hlg.enabled = false;
+
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+
+        Vector2 pos;
+        bool found = TryGetSpiralSpawnPosition(rect, out pos);
+
+        if (!found)
+        {
+            bool shouldShrink = shrinkToFitIfNeeded && (Random.value < chanceToShrinkInsteadOfOverflow);
+
+            if (shouldShrink)
+            {
+                float currentScale = buttonObj.transform.localScale.x;
+                bool placed = false;
+
+                while (currentScale > minButtonScale)
+                {
+                    currentScale *= shrinkStep;
+                    buttonObj.transform.localScale = new Vector3(currentScale, currentScale, 1f);
+
+                    yield return null;
+
+                    if (runId != dialogueRunId)
+                    {
+                        Destroy(buttonObj);
+                        yield break;
+                    }
+
+                    Canvas.ForceUpdateCanvases();
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+
+                    LayoutElement le2 = buttonObj.GetComponent<LayoutElement>();
+                    if (le2 != null)
+                    {
+                        le2.preferredWidth = rect.rect.width;
+                        le2.preferredHeight = rect.rect.height;
+                    }
+
+                    Canvas.ForceUpdateCanvases();
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+
+                    if (TryGetSpiralSpawnPosition(rect, out pos))
+                    {
+                        rect.anchoredPosition = pos;
+                        placed = true;
+                        break;
+                    }
+                }
+
+                if (!placed)
+                {
+                    rect.anchoredPosition = pos;
+                }
+            }
+            else
+            {
+                rect.anchoredPosition = pos;
+            }
+        }
+        else
+        {
+            rect.anchoredPosition = pos;
+        }
+
+        StartCoroutine(AnimateThoughtIn(cg, buttonObj.transform, buttonObj.transform.localScale));
+
+        bool canClickNow = (!isPaused && inResponseWindow);
+        button.SetInteractable(canClickNow);
+
+        activeButtons.Add(button);
+
+        if (debugLogs) Debug.Log($"[QTE] Spawned thought. clickableNow={canClickNow} inResponseWindow={inResponseWindow} activeButtons={activeButtons.Count}");
+    }
+
+    // --- placement helpers unchanged ---
     private float MinDistanceToOtherButtons(Vector2 candidate)
     {
         float best = float.PositiveInfinity;
@@ -355,82 +624,6 @@ public class DialogueQTEManager : MonoBehaviour
 
         buttonRect.anchoredPosition = prev;
         return bad;
-    }
-
-    private IEnumerator AnimateThoughtIn(CanvasGroup cg, Transform t, Vector3 finalScale, float duration = 0.12f)
-    {
-        if (cg != null) cg.alpha = 0f;
-
-        Vector3 startScale = finalScale * 0.92f;
-        t.localScale = startScale;
-
-        float elapsed = 0f;
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float p = Mathf.Clamp01(elapsed / duration);
-
-            float ease = 1f - Mathf.Pow(1f - p, 3f);
-
-            if (cg != null) cg.alpha = ease;
-            t.localScale = Vector3.LerpUnclamped(startScale, finalScale, ease);
-
-            yield return null;
-        }
-
-        if (cg != null) cg.alpha = 1f;
-        t.localScale = finalScale;
-    }
-
-    private IEnumerator SpawnOneThoughtButtonCoroutine(ClipResponse clipResponse)
-    {
-        GameObject buttonObj = Instantiate(thoughtButtonPrefab, spawnAreaRect);
-
-        buttonObj.transform.localScale *= clipResponse.responseSize;
-
-        if (varyThoughtSizes)
-        {
-            float mult = Random.Range(thoughtSizeMultiplierRange.x, thoughtSizeMultiplierRange.y);
-            buttonObj.transform.localScale *= mult;
-        }
-
-        CanvasGroup cg = buttonObj.GetComponent<CanvasGroup>();
-        if (cg == null) cg = buttonObj.AddComponent<CanvasGroup>();
-        cg.alpha = 0f;
-
-        RectTransform rect = buttonObj.GetComponent<RectTransform>();
-        ThoughtButtonUI button = buttonObj.GetComponent<ThoughtButtonUI>();
-
-        button.Setup(clipResponse, OnResponseSelected);
-
-        yield return null;
-
-        Canvas.ForceUpdateCanvases();
-        LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
-
-        LayoutElement le = buttonObj.GetComponent<LayoutElement>();
-        if (le == null) le = buttonObj.AddComponent<LayoutElement>();
-        le.preferredWidth = rect.rect.width;
-        le.preferredHeight = rect.rect.height;
-
-        ContentSizeFitter csf = buttonObj.GetComponent<ContentSizeFitter>();
-        if (csf != null) csf.enabled = false;
-
-        HorizontalLayoutGroup hlg = buttonObj.GetComponent<HorizontalLayoutGroup>();
-        if (hlg != null) hlg.enabled = false;
-
-        Canvas.ForceUpdateCanvases();
-        LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
-
-        Vector2 pos;
-        TryGetSpiralSpawnPosition(rect, out pos);
-        rect.anchoredPosition = pos;
-
-        StartCoroutine(AnimateThoughtIn(cg, buttonObj.transform, buttonObj.transform.localScale));
-
-        // IMPORTANT: stay disabled during audio
-        button.SetInteractable(false);
-        activeButtons.Add(button);
     }
 
     private bool TryGetSpiralSpawnPosition(RectTransform buttonRect, out Vector2 foundPos)
@@ -571,6 +764,8 @@ public class DialogueQTEManager : MonoBehaviour
 
     private IEnumerator ResponseTimer()
     {
+        if (debugLogs) Debug.Log("[QTE] Timer START.");
+
         float timeRemaining = responseTime;
         timerSlider.value = responseTime;
 
@@ -593,18 +788,29 @@ public class DialogueQTEManager : MonoBehaviour
 
         if (!responded)
         {
+            if (debugLogs) Debug.Log("[QTE] Timer END (no response) -> clearing + continuing dialogue (timid).");
+
             ClearButtons();
             AudioClipManager.Instance.PlayDialogue();
             if (portraitManager != null) portraitManager.SetRouteSprite(ChoiceType.Timid);
+        }
+        else
+        {
+            if (debugLogs) Debug.Log("[QTE] Timer END (responded).");
         }
     }
 
     private void OnResponseSelected(ClipResponse chosen)
     {
+        if (debugLogs) Debug.Log($"[QTE] Response SELECTED: {(chosen != null ? chosen.choiceType.ToString() : "null")}");
+
         responded = true;
         timerIsActive = false;
         inResponseWindow = false;
         responseWindowPending = false;
+
+        // CRITICAL FIX: stop spawning immediately on selection too
+        StopSpawnRoutine("response selected");
 
         if (timerRoutine != null) StopCoroutine(timerRoutine);
         timerSlider.gameObject.SetActive(false);
@@ -621,9 +827,9 @@ public class DialogueQTEManager : MonoBehaviour
         {
             if (button != null) button.SetInteractable(canClick);
         }
-    }
 
-    // ENDING THOUGHTS SYSTEM
+        if (debugLogs) Debug.Log($"[QTE] SetButtonsInteractable({canClick}) activeButtons={activeButtons.Count} inResponseWindow={inResponseWindow} paused={isPaused}");
+    }
 
     public void PlayEndingThoughts(ChoiceType endingType, string focusedText = "I can do this.")
     {
@@ -652,14 +858,13 @@ public class DialogueQTEManager : MonoBehaviour
 
     private IEnumerator SpawnFocusedEndingThought(string text)
     {
-        // Using realtime so it isn’t affected by Time.timeScale (build/pause differences)
-        yield return new WaitForSecondsRealtime(25);
+        yield return new WaitForSeconds(25);
         yield return StartCoroutine(SpawnEndingThoughtButton(text, 1.0f));
     }
 
     private IEnumerator SpawnOverwhelmingEndingThoughts(ChoiceType endingType)
     {
-        yield return new WaitForSecondsRealtime(5);
+        yield return new WaitForSeconds(5);
 
         int count = 30;
         float delay = 1f;
@@ -686,7 +891,7 @@ public class DialogueQTEManager : MonoBehaviour
                 : pool2[Random.Range(0, pool2.Length)];
 
             yield return StartCoroutine(SpawnEndingThoughtButton(t, scale));
-            yield return new WaitForSecondsRealtime(delay);
+            yield return new WaitForSeconds(delay);
         }
     }
 
@@ -747,6 +952,8 @@ public class DialogueQTEManager : MonoBehaviour
 
     private void ClearButtons()
     {
+        if (debugLogs) Debug.Log($"[QTE] ClearButtons. destroying={activeButtons.Count}");
+
         foreach (ThoughtButtonUI button in activeButtons)
         {
             if (button != null) Destroy(button.gameObject);
