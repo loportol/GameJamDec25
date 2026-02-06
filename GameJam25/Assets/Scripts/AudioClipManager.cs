@@ -98,7 +98,6 @@ public class AudioClipManager : MonoBehaviour
 
         // whenever dialogue starts, we're not paused + we are active
         isPaused = false;
-        dialogueActive = true;
 
         // if this clip is an ending, trigger ending UI too (but still run end logic)
         if (clipToPlay.IsEnding())
@@ -122,7 +121,6 @@ public class AudioClipManager : MonoBehaviour
             return;
         }
 
-        dialogueHasStarted.Invoke(clipToPlay);
         playRoutine = StartCoroutine(PlayDialogueCoroutine(clipToPlay));
     }
 
@@ -150,14 +148,15 @@ public class AudioClipManager : MonoBehaviour
         // choose skip fallback right away
         clipToPlay = clip.GetNextClipIfChoiceSkipped();
 
-        // wait until audio actually starts reporting time
-        float startTimeout = 1.0f;
-        float t = 0f;
-        while (audioSource.clip != null && audioSource.time <= 0f && t < startTimeout)
+        //Wait for dialogue to start ing
+        while(!audioSource.isPlaying)
         {
-            t += Time.deltaTime;
             yield return null;
         }
+
+        //Start the dialogue - GAMEPLAY STARTS HERE
+        dialogueActive = true;
+        dialogueHasStarted.Invoke(clip);
 
         // now wait for real end (Pause-safe)
         // IMPORTANT: don't use isPlaying alone because Pause() makes isPlaying false

@@ -4,8 +4,10 @@ using Yarn.Unity;
 
 public class PauseMenuController : MonoBehaviour
 {
+    public GameObject dialogue;
+
     [SerializeField] private GameObject pauseUI;
-    private DialogueQTEManager qteManager;
+    private DialogueManager qteManager;
     [SerializeField] private GameObject settingsUI;
     private DialogueRunner yarnRunner;
     private LinePresenter presenter;
@@ -14,7 +16,7 @@ public class PauseMenuController : MonoBehaviour
     private void Awake()
     {
         // this finds the QTE manager in the scene once
-        qteManager = Object.FindFirstObjectByType<DialogueQTEManager>();
+        qteManager = Object.FindFirstObjectByType<DialogueManager>();
         if (qteManager == null)
             Debug.LogWarning("Could not find the QTEManager in Awake, will try again when pausing.");
         
@@ -33,7 +35,7 @@ public class PauseMenuController : MonoBehaviour
     {
         if (qteManager == null)
         {
-            qteManager = Object.FindFirstObjectByType<DialogueQTEManager>();
+            qteManager = Object.FindFirstObjectByType<DialogueManager>();
             if (qteManager == null)
                 Debug.LogWarning("EnsureQTEManager: still could not find DialogueQTEManager.");
         }
@@ -47,14 +49,10 @@ public class PauseMenuController : MonoBehaviour
         }
 
         pauseUI.gameObject.SetActive(false);
+        dialogue.gameObject.SetActive(true);
 
         // unpause logic for QTE/timer
-        EnsureQTEManager();
-        if (qteManager != null)
-        {
-            Debug.Log("BackToGame: calling qteManager.SetPaused(false)");
-            qteManager.SetPaused(false);
-        }
+        //EnsureQTEManager();
 
         Time.timeScale = 1f;
 
@@ -62,9 +60,7 @@ public class PauseMenuController : MonoBehaviour
         {
             AudioClipManager.Instance.PauseDialogue(false);
         }
-        if (yarnRunner != null)
-            yarnRunner.enabled = true;
-        
+
         if (yarnRunner != null)
             yarnRunner.enabled = true;
 
@@ -100,14 +96,7 @@ public class PauseMenuController : MonoBehaviour
         }
 
         pauseUI.gameObject.SetActive(true);
-
-        // pause logic for QTE/timer
-        EnsureQTEManager();
-        if (qteManager != null)
-        {
-            Debug.Log("PauseGame: calling qteManager.SetPaused(true)");
-            qteManager.SetPaused(true);
-        }
+        dialogue.gameObject.SetActive(false);
 
         Time.timeScale = 0f;
 
@@ -136,12 +125,6 @@ public class PauseMenuController : MonoBehaviour
         Time.timeScale = 1f;
 
         // unpause QTE if it exists so it doesn't stay paused after scene swap
-        EnsureQTEManager();
-        if (qteManager != null)
-        {
-            Debug.Log("LoadMainMenu: calling qteManager.SetPaused(false)");
-            qteManager.SetPaused(false);
-        }
 
         if (AudioClipManager.Instance != null)
         {
@@ -159,13 +142,6 @@ public class PauseMenuController : MonoBehaviour
         }
 
         Time.timeScale = 1f;
-
-        EnsureQTEManager();
-        if (qteManager != null)
-        {
-            Debug.Log("BackToGame: calling qteManager.SetPaused(false)");
-            qteManager.SetPaused(false);
-        }
 
         if (AudioClipManager.Instance != null)
         {

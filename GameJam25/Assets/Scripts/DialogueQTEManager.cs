@@ -76,7 +76,7 @@ public class DialogueQTEManager : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool debugLogs = true;
 
-    private readonly List<ThoughtButtonUI> activeButtons = new List<ThoughtButtonUI>();
+    private List<ThoughtButtonUI> activeButtons = new List<ThoughtButtonUI>();
 
     private bool responded = false;
     private Coroutine timerRoutine;

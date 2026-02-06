@@ -16,7 +16,7 @@ public class EndingUIManager : MonoBehaviour
     // ending Thoughts Hook
     [Header("Ending Thoughts")]
     [Tooltip("if assigned, will spawn ending thoughts using the same dialogue/thought button system.")]
-    [SerializeField] private DialogueQTEManager qteManager;
+    [SerializeField] private DialogueManager qteManager;
     [SerializeField] private SceneMusicPlayer gameInstance;
 
     [Tooltip("Focused ending")]
@@ -40,7 +40,7 @@ public class EndingUIManager : MonoBehaviour
 
         // auto find if you forgot to drag it in
         if (qteManager == null)
-            qteManager = Object.FindFirstObjectByType<DialogueQTEManager>();
+            qteManager = Object.FindFirstObjectByType<DialogueManager>();
 
         // listen for ending signal from AudioClipManager
         AudioClipManager.Instance.endingReached.AddListener(OnEndingReached);
@@ -65,11 +65,11 @@ public class EndingUIManager : MonoBehaviour
 
             if (endingType == ChoiceType.Focused)
             {
-                qteManager.PlayEndingThoughts(endingType, focusedEndingThoughtText);
+                qteManager.playEndingThoughts(endingType, focusedEndingThoughtText);
             }
             else
             {
-                qteManager.PlayEndingThoughts(endingType);
+                qteManager.playEndingThoughts(endingType);
             }
         }
 
