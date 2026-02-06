@@ -93,15 +93,31 @@ public class DialogueQTEManager : MonoBehaviour
 
     // NEW: session token so old coroutines can safely abort
     private int dialogueRunId = 0;
+    // When true, don't allow entering a response window or enabling buttons (used for endings)
+    private bool suppressResponseWindow = false;
 
     private void Start()
     {
-        AudioClipManager.Instance.dialogueHasStarted.AddListener(OnDialogueStarted);
-        AudioClipManager.Instance.dialogueHasEnded.AddListener(OnDialogueEnded);
+        if (AudioClipManager.Instance != null)
+        {
+            AudioClipManager.Instance.dialogueHasStarted.AddListener(OnDialogueStarted);
+            AudioClipManager.Instance.dialogueHasEnded.AddListener(OnDialogueEnded);
+        }
+        else
+        {
+            if (debugLogs) Debug.Log("[QTE] AudioClipManager.Instance not found in Start().");
+        }
 
-        timerSlider.maxValue = responseTime;
-        timerSlider.value = responseTime;
-        timerSlider.gameObject.SetActive(false);
+        if (timerSlider != null)
+        {
+            timerSlider.maxValue = responseTime;
+            timerSlider.value = responseTime;
+            timerSlider.gameObject.SetActive(false);
+        }
+        else
+        {
+            if (debugLogs) Debug.Log("[QTE] timerSlider is not assigned in DialogueQTEManager.");
+        }
 
         portraitManager = Object.FindFirstObjectByType<MomPortraitRoutes>();
         if (portraitManager == null)
@@ -148,6 +164,16 @@ public class DialogueQTEManager : MonoBehaviour
 
     private void OnDialogueStarted(AudioClipSO clip)
     {
+        // If an ending sequence is active, ignore new dialogue starts so we
+        // don't accidentally clear the ending UI. This prevents ending
+        // dialogue buttons from being destroyed until the game actually
+        // transitions (for example back to the main menu).
+        if (suppressResponseWindow)
+        {
+            if (debugLogs) Debug.Log("[QTE] Ignoring new dialogue start during ending.");
+            return;
+        }
+
         // bump session id so any old coroutine exits
         dialogueRunId++;
 
@@ -212,7 +238,7 @@ public class DialogueQTEManager : MonoBehaviour
                 break;
             }
 
-            waited += Time.unscaledDeltaTime;
+            waited += Time.deltaTime;
             if (waited >= maxWaitSeconds)
             {
                 if (debugLogs) Debug.Log($"[QTE] Forcing response window after timeout ({maxWaitSeconds:0.00}s) - IsDialogueActive still true.");
@@ -229,6 +255,17 @@ public class DialogueQTEManager : MonoBehaviour
     {
         if (!responseWindowPending) return;
         if (isPaused) return;
+
+        if (suppressResponseWindow)
+        {
+            if (debugLogs) Debug.Log("[QTE] Suppressing response window for ending.");
+            responseWindowPending = false;
+            StopSpawnRoutine("ending - suppress response window");
+            // Do NOT clear buttons here: ending UI intentionally remains until
+            // the game transitions away (e.g., to main menu). Clearing would
+            // destroy the ending thoughts immediately, which is undesired.
+            return;
+        }
 
         if (AudioClipManager.Instance != null && AudioClipManager.Instance.IsDialogueActive())
         {
@@ -345,8 +382,8 @@ public class DialogueQTEManager : MonoBehaviour
         float lastT = -999f;
 
         while (AudioClipManager.Instance != null &&
-               AudioClipManager.Instance.IsDialogueActive() &&
-               AudioClipManager.Instance.GetPlaybackTime() < targetSeconds)
+            AudioClipManager.Instance.IsDialogueActive() &&
+            AudioClipManager.Instance.GetPlaybackTime() < targetSeconds)
         {
             if (runId != dialogueRunId) yield break;
             if (inResponseWindow || responseWindowPending) yield break;
@@ -358,15 +395,15 @@ public class DialogueQTEManager : MonoBehaviour
             }
 
             float t = AudioClipManager.Instance.GetPlaybackTime();
-            if (Mathf.Abs(t - lastT) < 0.0001f)
-            {
-                stall += Time.unscaledDeltaTime;
-                if (stall >= maxStallSeconds)
+                if (Mathf.Abs(t - lastT) < 0.0001f)
                 {
-                    if (debugLogs) Debug.Log($"[QTE] WaitUntilDialogueTime stall escape (t={t:0.00}, target={targetSeconds:0.00}).");
-                    break;
+                    stall += Time.deltaTime;
+                    if (stall >= maxStallSeconds)
+                    {
+                        if (debugLogs) Debug.Log($"[QTE] WaitUntilDialogueTime stall escape (t={t:0.00}, target={targetSeconds:0.00}).");
+                        break;
+                    }
                 }
-            }
             else
             {
                 stall = 0f;
@@ -412,7 +449,7 @@ public class DialogueQTEManager : MonoBehaviour
 
                 float start = AudioClipManager.Instance.GetPlaybackTime();
                 while (AudioClipManager.Instance.IsDialogueActive() &&
-                       (AudioClipManager.Instance.GetPlaybackTime() - start) < wait)
+                    (AudioClipManager.Instance.GetPlaybackTime() - start) < wait)
                 {
                     if (runId != dialogueRunId) yield break;
                     if (inResponseWindow || responseWindowPending) yield break;
@@ -458,7 +495,7 @@ public class DialogueQTEManager : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < duration)
         {
-            elapsed += Time.unscaledDeltaTime;
+            elapsed += Time.deltaTime;
             float p = Mathf.Clamp01(elapsed / duration);
 
             float ease = 1f - Mathf.Pow(1f - p, 3f);
@@ -707,7 +744,11 @@ public class DialogueQTEManager : MonoBehaviour
             if (CandidateHitsNoSpawnZones(buttonRect, candidate)) continue;
 
             float score = MinDistanceToOtherButtons(candidate);
-            score += Vector2.Distance(candidate, center) * 0.05f;
+            // prefer candidates closer to center; higher centerBias -> tighter cluster
+            float distToCenter = Vector2.Distance(candidate, center);
+            float maxSearchRadius = Mathf.Max(searchRadiusX, searchRadiusY);
+            float centerScore = (maxSearchRadius - distToCenter) * centerBias * 0.05f;
+            score += centerScore;
 
             if (score > bestScore)
             {
@@ -825,7 +866,18 @@ public class DialogueQTEManager : MonoBehaviour
     {
         foreach (ThoughtButtonUI button in activeButtons)
         {
-            if (button != null) button.SetInteractable(canClick);
+            if (button != null)
+            {
+                // never enable buttons during an ending suppression
+                if (canClick && suppressResponseWindow)
+                {
+                    button.SetInteractable(false);
+                }
+                else
+                {
+                    button.SetInteractable(canClick);
+                }
+            }
         }
 
         if (debugLogs) Debug.Log($"[QTE] SetButtonsInteractable({canClick}) activeButtons={activeButtons.Count} inResponseWindow={inResponseWindow} paused={isPaused}");
@@ -833,6 +885,9 @@ public class DialogueQTEManager : MonoBehaviour
 
     public void PlayEndingThoughts(ChoiceType endingType, string focusedText = "I can do this.")
     {
+        // prevent any normal response window behavior for endings
+        suppressResponseWindow = true;
+
         StopAllCoroutines();
 
         responded = false;

@@ -155,7 +155,7 @@ public class AudioClipManager : MonoBehaviour
         float t = 0f;
         while (audioSource.clip != null && audioSource.time <= 0f && t < startTimeout)
         {
-            t += Time.unscaledDeltaTime;
+            t += Time.deltaTime;
             yield return null;
         }
 
@@ -244,7 +244,22 @@ public class AudioClipManager : MonoBehaviour
 
     public float GetPlaybackTime()
     {
-        return audioSource != null ? audioSource.time : 0f;
+        if (audioSource == null) return 0f;
+        var clip = audioSource.clip;
+        if (clip == null) return 0f;
+
+        // Guard against cases where the AudioSource resource isn't a loaded AudioClip
+        // (Unity will warn when attempting to read `time` in that case).
+        try
+        {
+            if (clip.loadState != AudioDataLoadState.Loaded) return 0f;
+        }
+        catch
+        {
+            return 0f;
+        }
+
+        return audioSource.time;
     }
 
     public bool IsPlaying()
@@ -265,6 +280,17 @@ public class AudioClipManager : MonoBehaviour
 
     public float GetCurrentClipLength()
     {
-        return (audioSource != null && audioSource.clip != null) ? audioSource.clip.length : 0f;
+        if (audioSource == null) return 0f;
+        var clip = audioSource.clip;
+        if (clip == null) return 0f;
+        try
+        {
+            if (clip.loadState != AudioDataLoadState.Loaded) return 0f;
+        }
+        catch
+        {
+            return 0f;
+        }
+        return clip.length;
     }
 }
