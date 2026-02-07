@@ -295,7 +295,7 @@ public class DialogueManager : MonoBehaviour
     private void onDialogueEnded()
     {
         // CRITICAL FIX: stop spawning as soon as audio ends
-        StopSpawnRoutine("dialogue ended");
+        StopAllCoroutines();
 
         if (responseWindowRoutine != null) StopCoroutine(responseWindowRoutine);
 
