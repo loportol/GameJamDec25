@@ -48,6 +48,7 @@ public class DialogueManager : MonoBehaviour
     //private bool isPaused = false;
     private bool timerIsActive = false;
     private bool inResponseWindow = false; // only true AFTER audio ends
+    private bool isEnding = false;
 
     private Coroutine responseWindowRoutine;
     private MomPortraitRoutes portraitManager;
@@ -93,7 +94,10 @@ public class DialogueManager : MonoBehaviour
         timerSlider.gameObject.SetActive(false);
 
         // start spawning for THIS run
-        spawnRoutine = StartCoroutine(SpawnDuringAudio(clip));
+        if (!isEnding)
+        {
+            spawnRoutine = StartCoroutine(SpawnDuringAudio(clip));
+        }
     }
 
     //Spawning Coroutines 
@@ -222,6 +226,7 @@ public class DialogueManager : MonoBehaviour
     {
 
         GameObject buttonObj = Instantiate(thoughtButtonPrefab, spawnAreaRect);
+        
 
         buttonObj.transform.localScale *= clipResponse.responseSize;
 
@@ -231,6 +236,7 @@ public class DialogueManager : MonoBehaviour
 
         RectTransform rect = buttonObj.GetComponent<RectTransform>();
         ThoughtButtonUI button = buttonObj.GetComponent<ThoughtButtonUI>();
+        activeButtons.Add(button);
 
         button.Setup(clipResponse, onResponseSelected);
 
@@ -261,8 +267,6 @@ public class DialogueManager : MonoBehaviour
 
         bool canClickNow = (inResponseWindow);
         button.SetInteractable(canClickNow);
-
-        activeButtons.Add(button);
     }
 
     private IEnumerator AnimateThoughtIn(CanvasGroup cg, Transform t, Vector3 finalScale, float duration = 0.12f)
@@ -300,15 +304,20 @@ public class DialogueManager : MonoBehaviour
         if (responseWindowRoutine != null) StopCoroutine(responseWindowRoutine);
 
         //responseWindowRoutine = StartCoroutine(WaitForDialogueToReallyEndThenEnter());
-        inResponseWindow = true;
 
-        SetButtonsInteractable(true);
-        timerIsActive = true;
+        if (!isEnding)
+        {
+            inResponseWindow = true;
 
-        timerSlider.gameObject.SetActive(true);
+            SetButtonsInteractable(true);
+            timerIsActive = true;
 
-        if (timerRoutine != null) StopCoroutine(timerRoutine);
-        timerRoutine = StartCoroutine(startResponseTimer());
+            timerSlider.gameObject.SetActive(true);
+
+            if (timerRoutine != null) StopCoroutine(timerRoutine);
+            timerRoutine = StartCoroutine(startResponseTimer());
+        }
+       
     }
 
     private IEnumerator startResponseTimer()
@@ -574,6 +583,8 @@ public class DialogueManager : MonoBehaviour
 
         ClearButtons();
         SetButtonsInteractable(false);
+
+        isEnding = true;
 
         if (endingType == ChoiceType.Focused)
         {

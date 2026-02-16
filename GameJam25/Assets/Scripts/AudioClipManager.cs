@@ -110,11 +110,6 @@ public class AudioClipManager : MonoBehaviour
                 return;
             }
 
-            audioSource.clip = endClip;
-            audioSource.volume = GlobalDialogueVolume;
-            audioSource.Play();
-
-            dialogueHasStarted.Invoke(clipToPlay);
             endingReached.Invoke(clipToPlay);
 
             playRoutine = StartCoroutine(PlayDialogueCoroutine(clipToPlay));
