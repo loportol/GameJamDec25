@@ -17,7 +17,7 @@ MonoBehaviour:
   - response: "You\u2019re always like this!"
     numToSpawn: 1
     choiceType: 0
-    spawnTime: 0
+    spawnTime: 1
     responseSize: 1
     nextClipToPlay: {fileID: 11400000, guid: e18fe0f3a3f1d804aa2857ee70a5a373, type: 2}
   - response: Just leave me alone!
@@ -29,7 +29,7 @@ MonoBehaviour:
   - response: Just leave me alone!
     numToSpawn: 1
     choiceType: 0
-    spawnTime: 0
+    spawnTime: 2
     responseSize: 1.5
     nextClipToPlay: {fileID: 11400000, guid: e18fe0f3a3f1d804aa2857ee70a5a373, type: 2}
   - response: Just leave me alone!
@@ -41,7 +41,7 @@ MonoBehaviour:
   - response: "I don\u2019t know why I asked you here."
     numToSpawn: 1
     choiceType: 0
-    spawnTime: 0
+    spawnTime: 4
     responseSize: 1
     nextClipToPlay: {fileID: 11400000, guid: e18fe0f3a3f1d804aa2857ee70a5a373, type: 2}
   - response: "I don\u2019t know why I asked you here."
@@ -53,13 +53,13 @@ MonoBehaviour:
   - response: "I\u2019ve had enough."
     numToSpawn: 1
     choiceType: 0
-    spawnTime: 0
+    spawnTime: 12
     responseSize: 1
     nextClipToPlay: {fileID: 11400000, guid: e18fe0f3a3f1d804aa2857ee70a5a373, type: 2}
   - response: "I can\u2019t do this anymore."
     numToSpawn: 1
     choiceType: 0
-    spawnTime: 0
+    spawnTime: 10
     responseSize: 1
     nextClipToPlay: {fileID: 11400000, guid: e18fe0f3a3f1d804aa2857ee70a5a373, type: 2}
   - response: "Let\u2019s just drop it."
@@ -71,16 +71,16 @@ MonoBehaviour:
   - response: "Let\u2019s just drop it."
     numToSpawn: 2
     choiceType: 1
-    spawnTime: 6
+    spawnTime: 13
     responseSize: 1.5
     nextClipToPlay: {fileID: 11400000, guid: c391bed8551240442a4e3cd58584d4ae, type: 2}
-  - response: "You\u2019re right"
+  - response: "You\u2019re right."
     numToSpawn: 1
     choiceType: 1
     spawnTime: 10
     responseSize: 1
     nextClipToPlay: {fileID: 11400000, guid: c391bed8551240442a4e3cd58584d4ae, type: 2}
-  - response: "You\u2019re right"
+  - response: "You\u2019re right."
     numToSpawn: 1
     choiceType: 1
     spawnTime: 15
@@ -90,6 +90,12 @@ MonoBehaviour:
     numToSpawn: 1
     choiceType: 1
     spawnTime: 7
+    responseSize: 1.3
+    nextClipToPlay: {fileID: 11400000, guid: c391bed8551240442a4e3cd58584d4ae, type: 2}
+  - response: Just Leave Me Alone!
+    numToSpawn: 1
+    choiceType: 0
+    spawnTime: 18
     responseSize: 1.3
     nextClipToPlay: {fileID: 11400000, guid: c391bed8551240442a4e3cd58584d4ae, type: 2}
   clipLength: 24

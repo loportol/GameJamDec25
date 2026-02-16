@@ -21,13 +21,13 @@ MonoBehaviour:
     responseSize: 1
     nextClipToPlay: {fileID: 0}
   - response: "I can\u2019t tell her."
-    numToSpawn: 1
+    numToSpawn: 5
     choiceType: 1
     spawnTime: 0
     responseSize: 1
     nextClipToPlay: {fileID: 0}
   - response: "I can\u2019t tell her."
-    numToSpawn: 1
+    numToSpawn: 2
     choiceType: 1
     spawnTime: 5
     responseSize: 1
@@ -48,6 +48,30 @@ MonoBehaviour:
     numToSpawn: 2
     choiceType: 1
     spawnTime: 15
+    responseSize: 1
+    nextClipToPlay: {fileID: 0}
+  - response: "She won\u2019t understand."
+    numToSpawn: 2
+    choiceType: 1
+    spawnTime: 15
+    responseSize: 1
+    nextClipToPlay: {fileID: 0}
+  - response: "She won\u2019t understand."
+    numToSpawn: 2
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 1
+    nextClipToPlay: {fileID: 0}
+  - response: "She won\u2019t understand."
+    numToSpawn: 2
+    choiceType: 1
+    spawnTime: 0
+    responseSize: 1
+    nextClipToPlay: {fileID: 0}
+  - response: "She won\u2019t understand."
+    numToSpawn: 2
+    choiceType: 1
+    spawnTime: 6
     responseSize: 1
     nextClipToPlay: {fileID: 0}
   clipLength: 19

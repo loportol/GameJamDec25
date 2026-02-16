@@ -29,26 +29,14 @@ MonoBehaviour:
   - response: "I\u2019m dramatic??"
     numToSpawn: 1
     choiceType: 0
-    spawnTime: 0
+    spawnTime: 3
     responseSize: 1.6
     nextClipToPlay: {fileID: 11400000, guid: fb511445ab0e68043a7c83321a9bf789, type: 2}
-  - response: "I\u2019m dramatic??"
+  - response: Maybe I wouldn't have to be dramatic if you let me speak!
     numToSpawn: 1
     choiceType: 0
-    spawnTime: 0
-    responseSize: 1.7
-    nextClipToPlay: {fileID: 11400000, guid: fb511445ab0e68043a7c83321a9bf789, type: 2}
-  - response: "I\u2019m dramatic??"
-    numToSpawn: 1
-    choiceType: 0
-    spawnTime: 0
-    responseSize: 1.8
-    nextClipToPlay: {fileID: 11400000, guid: fb511445ab0e68043a7c83321a9bf789, type: 2}
-  - response: Maybe I wouldn't have to be dramatic if you let me speak.
-    numToSpawn: 1
-    choiceType: 0
-    spawnTime: 5
-    responseSize: 1.8
+    spawnTime: 3
+    responseSize: 1.5
     nextClipToPlay: {fileID: 11400000, guid: fb511445ab0e68043a7c83321a9bf789, type: 2}
   - response: "I know, I\u2019m sorry."
     numToSpawn: 1

@@ -17,7 +17,7 @@ MonoBehaviour:
   - response: I don't slouch.
     numToSpawn: 1
     choiceType: 0
-    spawnTime: 1
+    spawnTime: 2
     responseSize: 1.7
     nextClipToPlay: {fileID: 11400000, guid: 422e3297232ad05459ed38de55af6793, type: 2}
   - response: I don't slouch.
@@ -41,7 +41,7 @@ MonoBehaviour:
   - response: I know. I am trying.
     numToSpawn: 1
     choiceType: 1
-    spawnTime: 10
+    spawnTime: 15
     responseSize: 1
     nextClipToPlay: {fileID: 11400000, guid: 936afb4de2e2fd5408ac218cc7edc94e, type: 2}
   - response: I know. I am trying.
@@ -53,14 +53,14 @@ MonoBehaviour:
   - response: I know, Mom.
     numToSpawn: 1
     choiceType: 1
-    spawnTime: 10
-    responseSize: 0
+    spawnTime: 13
+    responseSize: 1
     nextClipToPlay: {fileID: 11400000, guid: 936afb4de2e2fd5408ac218cc7edc94e, type: 2}
   - response: I know, Mom.
-    numToSpawn: 4
+    numToSpawn: 1
     choiceType: 1
     spawnTime: 20
-    responseSize: 0
+    responseSize: 1
     nextClipToPlay: {fileID: 11400000, guid: 936afb4de2e2fd5408ac218cc7edc94e, type: 2}
   - response: I will try my best.
     numToSpawn: 2
@@ -68,19 +68,19 @@ MonoBehaviour:
     spawnTime: 12
     responseSize: 1.5
     nextClipToPlay: {fileID: 11400000, guid: 936afb4de2e2fd5408ac218cc7edc94e, type: 2}
-  - response: Please, if you would let me speak
+  - response: Please, if you would let me speak.
     numToSpawn: 1
     choiceType: 2
-    spawnTime: 0
+    spawnTime: 4
     responseSize: 1.2
     nextClipToPlay: {fileID: 11400000, guid: d47d5ee94fc1b2a48804eba92751c5d6, type: 2}
-  - response: Please, if you would let me speak
-    numToSpawn: 3
+  - response: Please, if you would let me speak.
+    numToSpawn: 1
     choiceType: 2
     spawnTime: 10
     responseSize: 1
     nextClipToPlay: {fileID: 11400000, guid: d47d5ee94fc1b2a48804eba92751c5d6, type: 2}
-  - response: Please, if you would let me speak
+  - response: Please, if you would let me speak.
     numToSpawn: 1
     choiceType: 2
     spawnTime: 20

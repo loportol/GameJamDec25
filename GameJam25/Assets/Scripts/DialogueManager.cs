@@ -94,10 +94,7 @@ public class DialogueManager : MonoBehaviour
         timerSlider.gameObject.SetActive(false);
 
         // start spawning for THIS run
-        if (!isEnding)
-        {
-            spawnRoutine = StartCoroutine(SpawnDuringAudio(clip));
-        }
+        spawnRoutine = StartCoroutine(SpawnDuringAudio(clip));
     }
 
     //Spawning Coroutines 
@@ -586,14 +583,14 @@ public class DialogueManager : MonoBehaviour
 
         isEnding = true;
 
-        if (endingType == ChoiceType.Focused)
-        {
-            StartCoroutine(SpawnFocusedEndingThought(focusedText));
-        }
-        else
-        {
-            StartCoroutine(SpawnOverwhelmingEndingThoughts(endingType));
-        }
+        //if (endingType == ChoiceType.Focused)
+        //{
+        //    StartCoroutine(SpawnFocusedEndingThought(focusedText));
+        //}
+        //else
+        //{
+        //    StartCoroutine(SpawnOverwhelmingEndingThoughts(endingType));
+        //}
     }
 
     private IEnumerator SpawnFocusedEndingThought(string text)

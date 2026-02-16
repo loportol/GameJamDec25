@@ -14,55 +14,49 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   audioClip: {fileID: 8300000, guid: 637344ce69a7f444abc4a02487466cd0, type: 3}
   responses:
-  - response: She left.
-    numToSpawn: 2
-    choiceType: 0
-    spawnTime: 15
-    responseSize: 1
-    nextClipToPlay: {fileID: 0}
   - response: She's gone.
     numToSpawn: 3
     choiceType: 0
-    spawnTime: 14
+    spawnTime: 13
     responseSize: 1
     nextClipToPlay: {fileID: 0}
-  - response: "I can\u2019t believe she left"
-    numToSpawn: 2
+  - response: "I can\u2019t believe she left."
+    numToSpawn: 1
     choiceType: 0
-    spawnTime: 15
+    spawnTime: 10
     responseSize: 1
     nextClipToPlay: {fileID: 0}
   - response: How could you talk to me like that?
-    numToSpawn: 1
+    numToSpawn: 3
     choiceType: 0
     spawnTime: 5
     responseSize: 1
     nextClipToPlay: {fileID: 0}
-  - response: "She wouldn\u2019t let me speak."
+  - response: "You wouldn\u2019t let me speak!"
     numToSpawn: 1
     choiceType: 0
-    spawnTime: 15
+    spawnTime: 1
     responseSize: 1
     nextClipToPlay: {fileID: 0}
-  - response: Oh my god
+  - response: Oh my god.
     numToSpawn: 5
     choiceType: 0
-    spawnTime: 0
+    spawnTime: 1
     responseSize: 1
     nextClipToPlay: {fileID: 0}
   - response: Why would she leave?
-    numToSpawn: 1
+    numToSpawn: 5
     choiceType: 0
-    spawnTime: 15
+    spawnTime: 10
     responseSize: 1
     nextClipToPlay: {fileID: 0}
   - response: Mom?
-    numToSpawn: 10
+    numToSpawn: 5
     choiceType: 0
-    spawnTime: 0
-    responseSize: 0
+    spawnTime: 1
+    responseSize: 1
     nextClipToPlay: {fileID: 0}
-  - response: "I didn\u2019t tell her"
+  - response: "I didn\u2019t say it."
     numToSpawn: 3
     choiceType: 0
     spawnTime: 10
